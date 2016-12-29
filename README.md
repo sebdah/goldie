@@ -34,6 +34,15 @@ func TestExample(t *testing.T) {
 }
 ```
 
+Then run your test with the `-update` flag the first time to store the result.
+
+`go test -update ./...`
+
+For any consecutive runs where you actually want to compare the data, simply
+drop the `-update` flag.
+
+`go test ./...`
+
 ## FAQ
 
 ### Do you need any help in the project?

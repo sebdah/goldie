@@ -36,8 +36,8 @@ The `Assert` function takes the test object, a test name (should only contain le
 
 The following public variables can be used to control the behaviour of `goldie`:
 
-- `GoldenDirectory` - Dir to store the golden test files in. It will be relative
-	to where the tests are executed. Default: `fixtures`.
+- `FixtureDir` - Dir to store the golden test files in. It will be relative to
+	where the tests are executed. Default: `fixtures`.
 - `FileNameSuffix` - Suffix to use for the golden test files. Default:
 	`.golden`.
 - `FlagName` - Name of the command line argument for updating the golden test

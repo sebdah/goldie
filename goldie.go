@@ -11,9 +11,9 @@ import (
 )
 
 var (
-	// BasePath is the folder name for where the fixtures are stored. It's
+	// FixtureDir is the folder name for where the fixtures are stored. It's
 	// relative to the "go test" path.
-	BasePath = "golden-fixtures"
+	FixtureDir = "fixtures"
 
 	// FileNameSuffix is the suffix appended to the fixtures. Set to empty
 	// string to disable file name suffixes.
@@ -33,7 +33,7 @@ var (
 // file.
 func Assert(t *testing.T, name string, actualData []byte) {
 	goldenFilePath := filepath.Join(
-		BasePath,
+		FixtureDir,
 		fmt.Sprintf("%s%s", name, FileNameSuffix))
 
 	if *update {
@@ -67,13 +67,13 @@ func Assert(t *testing.T, name string, actualData []byte) {
 
 // ensureBasePath will create the fixture folder if it does not already exist.
 func ensureBasePath() error {
-	_, err := os.Stat(BasePath)
+	_, err := os.Stat(FixtureDir)
 	if err == nil {
 		return nil
 	}
 
 	if os.IsNotExist(err) {
-		err = os.Mkdir(BasePath, 0755)
+		err = os.Mkdir(FixtureDir, 0755)
 		if err != nil {
 			return err
 		}

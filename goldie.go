@@ -10,6 +10,7 @@ package goldie
 
 import (
 	"bytes"
+	"errors"
 	"flag"
 	"fmt"
 	"io/ioutil"
@@ -49,7 +50,7 @@ var (
 // `name` refers to the name of the test and it should typically be unique
 // withing the package. Also it should be a valid file name (so keeping to
 // `a-z0-9\-\_` is a good idea).
-func Assert(t *testing.T, name string, actualData []byte) {
+func Assert(t *testing.T, name string, actualData *[]byte) {
 	if *update {
 		err := Update(name, actualData)
 		if err != nil {
@@ -58,18 +59,17 @@ func Assert(t *testing.T, name string, actualData []byte) {
 		}
 	}
 
-	expectedData, err := ioutil.ReadFile(goldenFileName(name))
+	err := compare(name, actualData)
 	if err != nil {
-		if os.IsNotExist(err) {
-			t.Error("Golden fixture not found. Try running with -update flag.")
+		switch err.(type) {
+		case errFixtureNotFound:
+			t.Error(err)
 			t.FailNow()
-		} else {
-			t.Errorf("Expected %s to be nil", err.Error())
+		case errFixtureMismatch:
+			t.Error(err)
+		default:
+			t.Error(err)
 		}
-	}
-
-	if !bytes.Equal(actualData, expectedData) {
-		t.Errorf("Result did not match the golden file")
 	}
 }
 
@@ -78,15 +78,34 @@ func Assert(t *testing.T, name string, actualData []byte) {
 // This method does not need to be called from code, but it's exposed so that it
 // can be explicitly called if needed. The more common approach would be to
 // update using `go test -update ./...`.
-func Update(name string, actualData []byte) error {
+func Update(name string, actualData *[]byte) error {
 	err := ensureFixtureDir()
 	if err != nil {
 		return err
 	}
 
-	err = ioutil.WriteFile(goldenFileName(name), actualData, FilePerms)
+	err = ioutil.WriteFile(goldenFileName(name), *actualData, FilePerms)
 	if err != nil {
 		return err
+	}
+
+	return nil
+}
+
+// compare is reading the golden fixture file and compate the stored data with
+// the actual data.
+func compare(name string, actualData *[]byte) error {
+	expectedData, err := ioutil.ReadFile(goldenFileName(name))
+	if err != nil {
+		if os.IsNotExist(err) {
+			return newErrFixtureNotFound()
+		} else {
+			return errors.New(fmt.Sprintf("Expected %s to be nil", err.Error()))
+		}
+	}
+
+	if !bytes.Equal(*actualData, expectedData) {
+		return newErrFixtureMismatch("Result did not match the golden file")
 	}
 
 	return nil

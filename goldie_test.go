@@ -116,12 +116,57 @@ func TestUpdate(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		err := Update(test.name, test.data)
+		err := Update(test.name, &test.data)
 		assert.Equal(t, test.err, err)
 
 		data, err := ioutil.ReadFile(goldenFileName(test.name))
 		assert.Nil(t, err)
 		assert.Equal(t, test.data, data)
+
+		err = os.RemoveAll(FixtureDir)
+		assert.Nil(t, err)
+	}
+}
+
+func TestCompare(t *testing.T) {
+	tests := []struct {
+		name         string
+		actualData   []byte
+		expectedData []byte
+		update       bool
+		err          error
+	}{
+		{
+			name:         "example",
+			actualData:   []byte("abc"),
+			expectedData: []byte("abc"),
+			update:       true,
+			err:          nil,
+		},
+		{
+			name:         "example",
+			actualData:   []byte("abc"),
+			expectedData: []byte("abc"),
+			update:       false,
+			err:          errFixtureNotFound{},
+		},
+		{
+			name:         "example",
+			actualData:   []byte("bc"),
+			expectedData: []byte("abc"),
+			update:       true,
+			err:          errFixtureMismatch{},
+		},
+	}
+
+	for _, test := range tests {
+		if test.update {
+			err := Update(test.name, &test.expectedData)
+			assert.Nil(t, err)
+		}
+
+		err := compare(test.name, &test.actualData)
+		assert.IsType(t, test.err, err)
 
 		err = os.RemoveAll(FixtureDir)
 		assert.Nil(t, err)

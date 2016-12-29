@@ -84,7 +84,7 @@ func Update(name string, actualData []byte) error {
 		return err
 	}
 
-	err := ioutil.WriteFile(goldenFileName(name), actualData, FilePerms)
+	err = ioutil.WriteFile(goldenFileName(name), actualData, FilePerms)
 	if err != nil {
 		return err
 	}

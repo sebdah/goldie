@@ -57,6 +57,12 @@ Yes, please! Pull requests are most welcome. On the wish list:
 The name comes from the fact that it's for Go and handles golden file testing.
 But yes, it may not be the best name in the world.
 
+### How did you come up with the idea?
+
+This is based on the great [Advanced Go
+testing](https://www.youtube.com/watch?v=yszygk1cpEc) talk by
+[@mitchellh](https://twitter.com/mitchellh).
+
 ## License
 
 MIT

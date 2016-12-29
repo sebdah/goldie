@@ -1,5 +1,7 @@
 # goldie
 
+[![GoDoc](https://godoc.org/github.com/sebdah/goldie?status.svg)](https://godoc.org/github.com/sebdah/goldie)
+
 `goldie` is a golden file test utility for Go projects. It's typically used for testing responses with larger data bodies.
 
 The concept is straight forward. Valid response data is stored in a "golden file". The actual response data will be byte compared with the golden file and the test will fail if there is a difference.

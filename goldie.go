@@ -1,3 +1,11 @@
+// Package goldie provides test assertions based on golden files. It's typically
+// used for testing responses with larger data bodies.
+//
+// The concept is straight forward. Valid response data is stored in a "golden
+// file". The actual response data will be byte compared with the golden file
+// and the test will fail if there is a difference.
+//
+// Updating the golden file can be done by running `go test -update ./...`.
 package goldie
 
 import (

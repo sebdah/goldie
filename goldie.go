@@ -42,27 +42,17 @@ var (
 //
 // `name` refers to the name of the test and it should typically be unique
 // withing the package. Also it should be a valid file name (so keeping to
-// `a-z0-9\-\_` is a good idea.
+// `a-z0-9\-\_` is a good idea).
 func Assert(t *testing.T, name string, actualData []byte) {
-	goldenFilePath := filepath.Join(
-		FixtureDir,
-		fmt.Sprintf("%s%s", name, FileNameSuffix))
-
 	if *update {
-		err := ensureBasePath()
-		if err != nil {
-			t.Error(err)
-			t.FailNow()
-		}
-
-		err := ioutil.WriteFile(goldenFilePath, actualData, 0644)
+		err := Update(name, actualData)
 		if err != nil {
 			t.Error(err)
 			t.FailNow()
 		}
 	}
 
-	expectedData, err := ioutil.ReadFile(goldenFilePath)
+	expectedData, err := ioutil.ReadFile(goldenFileName(name))
 	if err != nil {
 		if os.IsNotExist(err) {
 			t.Error("Golden fixture not found. Try running with -update flag.")
@@ -75,6 +65,25 @@ func Assert(t *testing.T, name string, actualData []byte) {
 	if !bytes.Equal(actualData, expectedData) {
 		t.Errorf("Result did not match the golden file")
 	}
+}
+
+// Update will update the golden fixtures with the received actual data.
+//
+// This method does not need to be called from code, but it's exposed so that it
+// can be explicitly called if needed. The more common approach would be to
+// update using `go test -update ./...`.
+func Update(name string, actualData []byte) error {
+	err := ensureBasePath()
+	if err != nil {
+		return err
+	}
+
+	err := ioutil.WriteFile(goldenFileName(name), actualData, 0644)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // ensureBasePath will create the fixture folder if it does not already exist.
@@ -92,4 +101,9 @@ func ensureBasePath() error {
 	}
 
 	return err
+}
+
+// goldenFileName simply returns the file name of the golden file fixture.
+func goldenFileName(name string) string {
+	return filepath.Join(FixtureDir, fmt.Sprintf("%s%s", name, FileNameSuffix))
 }

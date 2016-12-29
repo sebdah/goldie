@@ -34,6 +34,13 @@ func TestExample(t *testing.T) {
 
 The `Assert` function takes the test object, a test name (should only contain letters valid in a filename) and a byte slice for comparing with the golden file.
 
+### Update(string, []byte)
+
+The `Update` function is used to write the actual data to the golden fixture.
+This method is exposed so that it can be called from code. But the more common
+approach would be to update the fixtures using the `-update` parameter to `go
+test`.
+
 ## Configuration
 
 The following public variables can be used to control the behaviour of `goldie`:

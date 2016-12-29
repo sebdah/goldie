@@ -1,6 +1,7 @@
 package goldie
 
 import (
+	"io/ioutil"
 	"os"
 	"testing"
 
@@ -96,5 +97,33 @@ func TestEnsureFixtureDir(t *testing.T) {
 		}
 
 		FixtureDir = oldFixtureDir
+	}
+}
+
+// TODO: This test could use a little <3. It should test some more negative
+// cases.
+func TestUpdate(t *testing.T) {
+	tests := []struct {
+		name string
+		data []byte
+		err  error
+	}{
+		{
+			name: "abc",
+			data: []byte("some example data"),
+			err:  nil,
+		},
+	}
+
+	for _, test := range tests {
+		err := Update(test.name, test.data)
+		assert.Equal(t, test.err, err)
+
+		data, err := ioutil.ReadFile(goldenFileName(test.name))
+		assert.Nil(t, err)
+		assert.Equal(t, test.data, data)
+
+		err = os.RemoveAll(FixtureDir)
+		assert.Nil(t, err)
 	}
 }

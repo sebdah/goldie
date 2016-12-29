@@ -1,4 +1,4 @@
-# goldie
+# goldie - Golden test utility for Go
 
 [![GoDoc](https://godoc.org/github.com/sebdah/goldie?status.svg)](https://godoc.org/github.com/sebdah/goldie)
 

@@ -105,7 +105,12 @@ func compare(name string, actualData []byte) error {
 	}
 
 	if !bytes.Equal(actualData, expectedData) {
-		return newErrFixtureMismatch("Result did not match the golden file")
+		return newErrFixtureMismatch(
+			fmt.Sprintf("Result did not match the golden fixture.\n"+
+				"Expected: %s\n"+
+				"Got: %s",
+				string(expectedData),
+				string(actualData)))
 	}
 
 	return nil

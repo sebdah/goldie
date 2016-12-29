@@ -39,6 +39,10 @@ var (
 // Assert compares the actual data received with the expected data in the
 // golden files. If the update flag is set, it will also update the golden
 // file.
+//
+// `name` refers to the name of the test and it should typically be unique
+// withing the package. Also it should be a valid file name (so keeping to
+// `a-z0-9\-\_` is a good idea.
 func Assert(t *testing.T, name string, actualData []byte) {
 	goldenFilePath := filepath.Join(
 		FixtureDir,

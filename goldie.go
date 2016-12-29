@@ -30,6 +30,12 @@ var (
 	// FlagName is the name of the command line flag for go test.
 	FlagName = "update"
 
+	// FilePerms is used to set the permissions on the golden fixture files.
+	FilePerms os.FileMode = 0644
+
+	// DirPerms is used to set the permissions on the golden fixture folder.
+	DirPerms os.FileMode = 0755
+
 	// update determines if the actual received data should be written to the
 	// golden files or not. This should be true when you need to update the
 	// data, but false when actually running the tests.
@@ -78,7 +84,7 @@ func Update(name string, actualData []byte) error {
 		return err
 	}
 
-	err := ioutil.WriteFile(goldenFileName(name), actualData, 0644)
+	err := ioutil.WriteFile(goldenFileName(name), actualData, FilePerms)
 	if err != nil {
 		return err
 	}
@@ -94,7 +100,7 @@ func ensureBasePath() error {
 	}
 
 	if os.IsNotExist(err) {
-		err = os.Mkdir(FixtureDir, 0755)
+		err = os.Mkdir(FixtureDir, DirPerms)
 		if err != nil {
 			return err
 		}

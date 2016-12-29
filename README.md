@@ -51,6 +51,8 @@ The following public variables can be used to control the behaviour of `goldie`:
 	`.golden`.
 - `FlagName` - Name of the command line argument for updating the golden test
 	files. Default: `update`.
+- `FilePerms` - Permissions to set on the golden fixture files. Default: `0644`.
+- `DirPerms` - Permissions to set on the golden fixture folder. Default: `0755`.
 
 ## FAQ
 

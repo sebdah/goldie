@@ -50,7 +50,7 @@ var (
 // `name` refers to the name of the test and it should typically be unique
 // withing the package. Also it should be a valid file name (so keeping to
 // `a-z0-9\-\_` is a good idea).
-func Assert(t *testing.T, name string, actualData *[]byte) {
+func Assert(t *testing.T, name string, actualData []byte) {
 	if *update {
 		err := Update(name, actualData)
 		if err != nil {
@@ -78,13 +78,13 @@ func Assert(t *testing.T, name string, actualData *[]byte) {
 // This method does not need to be called from code, but it's exposed so that it
 // can be explicitly called if needed. The more common approach would be to
 // update using `go test -update ./...`.
-func Update(name string, actualData *[]byte) error {
+func Update(name string, actualData []byte) error {
 	err := ensureFixtureDir()
 	if err != nil {
 		return err
 	}
 
-	err = ioutil.WriteFile(goldenFileName(name), *actualData, FilePerms)
+	err = ioutil.WriteFile(goldenFileName(name), actualData, FilePerms)
 	if err != nil {
 		return err
 	}
@@ -94,7 +94,7 @@ func Update(name string, actualData *[]byte) error {
 
 // compare is reading the golden fixture file and compate the stored data with
 // the actual data.
-func compare(name string, actualData *[]byte) error {
+func compare(name string, actualData []byte) error {
 	expectedData, err := ioutil.ReadFile(goldenFileName(name))
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -104,7 +104,7 @@ func compare(name string, actualData *[]byte) error {
 		}
 	}
 
-	if !bytes.Equal(*actualData, expectedData) {
+	if !bytes.Equal(actualData, expectedData) {
 		return newErrFixtureMismatch("Result did not match the golden file")
 	}
 

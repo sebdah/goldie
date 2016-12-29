@@ -116,7 +116,7 @@ func TestUpdate(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		err := Update(test.name, &test.data)
+		err := Update(test.name, test.data)
 		assert.Equal(t, test.err, err)
 
 		data, err := ioutil.ReadFile(goldenFileName(test.name))
@@ -161,11 +161,11 @@ func TestCompare(t *testing.T) {
 
 	for _, test := range tests {
 		if test.update {
-			err := Update(test.name, &test.expectedData)
+			err := Update(test.name, test.expectedData)
 			assert.Nil(t, err)
 		}
 
-		err := compare(test.name, &test.actualData)
+		err := compare(test.name, test.actualData)
 		assert.IsType(t, test.err, err)
 
 		err = os.RemoveAll(FixtureDir)

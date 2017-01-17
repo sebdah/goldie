@@ -10,7 +10,6 @@ package goldie
 
 import (
 	"bytes"
-	"errors"
 	"flag"
 	"fmt"
 	"io/ioutil"
@@ -48,7 +47,7 @@ var (
 // file.
 //
 // `name` refers to the name of the test and it should typically be unique
-// withing the package. Also it should be a valid file name (so keeping to
+// within the package. Also it should be a valid file name (so keeping to
 // `a-z0-9\-\_` is a good idea).
 func Assert(t *testing.T, name string, actualData []byte) {
 	if *update {
@@ -99,9 +98,8 @@ func compare(name string, actualData []byte) error {
 	if err != nil {
 		if os.IsNotExist(err) {
 			return newErrFixtureNotFound()
-		} else {
-			return errors.New(fmt.Sprintf("Expected %s to be nil", err.Error()))
 		}
+		return fmt.Errorf("Expected %s to be nil", err.Error())
 	}
 
 	if !bytes.Equal(actualData, expectedData) {

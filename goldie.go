@@ -10,7 +10,6 @@ package goldie
 
 import (
 	"bytes"
-	"errors"
 	"flag"
 	"fmt"
 	"io/ioutil"
@@ -99,9 +98,9 @@ func compare(name string, actualData []byte) error {
 	if err != nil {
 		if os.IsNotExist(err) {
 			return newErrFixtureNotFound()
-		} else {
-			return errors.New(fmt.Sprintf("Expected %s to be nil", err.Error()))
 		}
+
+		return fmt.Errorf("Expected %s to be nil", err.Error())
 	}
 
 	if !bytes.Equal(actualData, expectedData) {

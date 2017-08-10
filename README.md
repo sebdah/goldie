@@ -2,6 +2,7 @@
 
 [![GoDoc](https://godoc.org/github.com/sebdah/goldie?status.svg)](https://godoc.org/github.com/sebdah/goldie)
 [![CircleCI](https://circleci.com/gh/sebdah/goldie.svg?style=svg)](https://circleci.com/gh/sebdah/goldie)
+[![Go Report Card](https://goreportcard.com/badge/github.com/sebdah/goldie)](https://goreportcard.com/report/github.com/sebdah/goldie)
 
 `goldie` is a golden file test utility for Go projects. It's typically used for
 testing responses with larger data bodies.

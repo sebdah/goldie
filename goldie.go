@@ -99,6 +99,7 @@ func compare(name string, actualData []byte) error {
 		if os.IsNotExist(err) {
 			return newErrFixtureNotFound()
 		}
+
 		return fmt.Errorf("Expected %s to be nil", err.Error())
 	}
 

@@ -56,7 +56,7 @@ func TestGoldenFileName(t *testing.T) {
 	}
 }
 
-func TestEnsureFixtureDir(t *testing.T) {
+func TestEnsureDir(t *testing.T) {
 	tests := []struct {
 		dir         string
 		shouldExist bool
@@ -80,23 +80,18 @@ func TestEnsureFixtureDir(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		oldFixtureDir := FixtureDir
-		FixtureDir = test.dir
-
 		if test.shouldExist {
 			err := os.Mkdir(test.dir, 0755)
 			assert.Nil(t, err)
 		}
 
-		err := ensureFixtureDir()
+		err := ensureDir(test.dir)
 		assert.IsType(t, test.err, err)
 
 		if err == nil {
 			err = os.RemoveAll(test.dir)
 			assert.Nil(t, err)
 		}
-
-		FixtureDir = oldFixtureDir
 	}
 }
 

@@ -78,7 +78,7 @@ func Assert(t *testing.T, name string, actualData []byte) {
 // can be explicitly called if needed. The more common approach would be to
 // update using `go test -update ./...`.
 func Update(name string, actualData []byte) error {
-	err := ensureFixtureDir()
+	err := ensureDir(FixtureDir)
 	if err != nil {
 		return err
 	}
@@ -116,14 +116,14 @@ func compare(name string, actualData []byte) error {
 }
 
 // ensureFixtureDir will create the fixture folder if it does not already exist.
-func ensureFixtureDir() error {
-	_, err := os.Stat(FixtureDir)
+func ensureDir(loc string) error {
+	_, err := os.Stat(loc)
 	if err == nil {
 		return nil
 	}
 
 	if os.IsNotExist(err) {
-		err = os.Mkdir(FixtureDir, DirPerms)
+		err = os.Mkdir(loc, DirPerms)
 		if err != nil {
 			return err
 		}

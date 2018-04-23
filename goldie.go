@@ -123,7 +123,7 @@ func ensureDir(loc string) error {
 	}
 
 	if os.IsNotExist(err) {
-		err = os.Mkdir(loc, DirPerms)
+		err = os.MkdirAll(loc, DirPerms)
 		if err != nil {
 			return err
 		}

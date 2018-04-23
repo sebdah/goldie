@@ -73,9 +73,9 @@ func TestEnsureDir(t *testing.T) {
 			err:         nil,
 		},
 		{
-			dir:         "\"24348q0980fd/&&**D&S**SS:",
-			shouldExist: false,
-			err:         &os.PathError{},
+			dir:         "now/still/works",
+			shouldExist: true,
+			err:         nil,
 		},
 	}
 

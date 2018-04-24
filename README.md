@@ -36,6 +36,37 @@ func TestExample(t *testing.T) {
 }
 ```
 
+## Using template golden file
+
+If some values in the golden file can change depending on the test, you can use golang
+template in the golden file and pass the data to `goldie.AssertWithTemplate`.
+
+### example.golden
+```
+This is a {{ .Type }} file.
+```
+
+### Test
+```
+func TestTemplateExample(t *testing.T) {
+    recorder := httptest.NewRecorder()
+
+    req, err := http.NewRequest("POST", "/example/Golden", nil)
+    assert.Nil(t, err)
+
+    handler := http.HandlerFunc(ExampleHandler)
+    handler.ServeHTTP()
+
+    data := struct {
+        Type	string
+    }{
+        Type:	"Golden",
+    }
+
+    goldie.AssertWithTemplate(t, "example", data, recorder.Body.Bytes())
+}
+```
+
 Then run your test with the `-update` flag the first time to store the result.
 
 `go test -update ./...`

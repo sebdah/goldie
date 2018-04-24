@@ -50,7 +50,17 @@ var (
 // `name` refers to the name of the test and it should typically be unique
 // within the package. Also it should be a valid file name (so keeping to
 // `a-z0-9\-\_` is a good idea).
-func Assert(t *testing.T, name string, data interface{}, actualData []byte) {
+func Assert(t *testing.T, name string, actualData []byte) {
+	AssertWithTemplate(t, name, nil, actualData)
+}
+
+// Assert compares the actual data received with the expected data in the
+// golden files after executing it as a template with data parameter.
+// If the update flag is set, it will also update the golden file.
+// `name` refers to the name of the test and it should typically be unique
+// within the package. Also it should be a valid file name (so keeping to
+// `a-z0-9\-\_` is a good idea).
+func AssertWithTemplate(t *testing.T, name string, data interface{} , actualData []byte) {
 	if *update {
 		err := Update(name, actualData)
 		if err != nil {
@@ -71,16 +81,6 @@ func Assert(t *testing.T, name string, data interface{}, actualData []byte) {
 			t.Error(err)
 		}
 	}
-}
-
-// Assert compares the actual data received with the expected data in the
-// golden files after executing it as a template with data parameter.
-// If the update flag is set, it will also update the golden file.
-// `name` refers to the name of the test and it should typically be unique
-// within the package. Also it should be a valid file name (so keeping to
-// `a-z0-9\-\_` is a good idea).
-func AssertWithTemplate(t *testing.T, name string, data interface{} , actualData []byte) {
-	Assert(t, name, nil, actualData)
 }
 
 

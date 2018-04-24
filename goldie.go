@@ -78,14 +78,14 @@ func Assert(t *testing.T, name string, actualData []byte) {
 // can be explicitly called if needed. The more common approach would be to
 // update using `go test -update ./...`.
 func Update(name string, actualData []byte) error {
-	err := ensureDir(FixtureDir)
-	if err != nil {
-		return err
-	}
-
-	// if err = ensureDir(goldenFileName(name)); err != nil {
+	// err := ensureDir(FixtureDir)
+	// if err != nil {
 	// 	return err
 	// }
+
+	if err := ensureDir(filepath.Dir(goldenFileName(name))); err != nil {
+		return err
+	}
 
 	return ioutil.WriteFile(goldenFileName(name), actualData, FilePerms)
 }

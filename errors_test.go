@@ -21,3 +21,12 @@ func TestErrFixtureMismatch(t *testing.T) {
 	assert.Equal(t, message, err.Error())
 	assert.IsType(t, errFixtureMismatch{}, err)
 }
+
+func TestErrFixtureDirectoryIsFile(t *testing.T) {
+	message := "fixture folder is a file: some/location/thing"
+	location := "some/location/thing"
+	err := newErrFixtureDirectoryIsFile(location)
+
+	assert.Equal(t, message, err.Error())
+	assert.IsType(t, errFixtureDirectoryIsFile{}, err)
+}

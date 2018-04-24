@@ -83,12 +83,12 @@ func Update(name string, actualData []byte) error {
 		return err
 	}
 
-	err = ioutil.WriteFile(goldenFileName(name), actualData, FilePerms)
-	if err != nil {
-		return err
-	}
+	// if err = ensureDir(goldenFileName(name)); err != nil {
+	// 	return err
+	// }
 
-	return nil
+	err = ioutil.WriteFile(goldenFileName(name), actualData, FilePerms)
+	return err
 }
 
 // compare is reading the golden fixture file and compate the stored data with
@@ -117,19 +117,20 @@ func compare(name string, actualData []byte) error {
 
 // ensureFixtureDir will create the fixture folder if it does not already exist.
 func ensureDir(loc string) error {
-	_, err := os.Stat(loc)
-	if err == nil {
-		return nil
-	}
-
-	if os.IsNotExist(err) {
+	s, err := os.Stat(loc)
+	switch {
+	case err != nil && os.IsNotExist(err):
+		// the location does not exist, so make directories to there
 		err = os.MkdirAll(loc, DirPerms)
 		if err != nil {
 			return err
 		}
+		return err
+	case err == nil && !s.IsDir():
+		return newErrFixtureDirectoryIsFile(loc)
+	default:
+		return err
 	}
-
-	return err
 }
 
 // goldenFileName simply returns the file name of the golden file fixture.

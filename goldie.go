@@ -87,8 +87,7 @@ func Update(name string, actualData []byte) error {
 	// 	return err
 	// }
 
-	err = ioutil.WriteFile(goldenFileName(name), actualData, FilePerms)
-	return err
+	return ioutil.WriteFile(goldenFileName(name), actualData, FilePerms)
 }
 
 // compare is reading the golden fixture file and compate the stored data with
@@ -115,7 +114,7 @@ func compare(name string, actualData []byte) error {
 	return nil
 }
 
-// ensureFixtureDir will create the fixture folder if it does not already exist.
+// ensureDir will create the fixture folder if it does not already exist.
 func ensureDir(loc string) error {
 	s, err := os.Stat(loc)
 	switch {

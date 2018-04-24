@@ -78,17 +78,11 @@ func Assert(t *testing.T, name string, actualData []byte) {
 // can be explicitly called if needed. The more common approach would be to
 // update using `go test -update ./...`.
 func Update(name string, actualData []byte) error {
-	err := ensureFixtureDir()
-	if err != nil {
+	if err := ensureDir(filepath.Dir(goldenFileName(name))); err != nil {
 		return err
 	}
 
-	err = ioutil.WriteFile(goldenFileName(name), actualData, FilePerms)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return ioutil.WriteFile(goldenFileName(name), actualData, FilePerms)
 }
 
 // compare is reading the golden fixture file and compate the stored data with
@@ -115,21 +109,22 @@ func compare(name string, actualData []byte) error {
 	return nil
 }
 
-// ensureFixtureDir will create the fixture folder if it does not already exist.
-func ensureFixtureDir() error {
-	_, err := os.Stat(FixtureDir)
-	if err == nil {
-		return nil
-	}
-
-	if os.IsNotExist(err) {
-		err = os.Mkdir(FixtureDir, DirPerms)
+// ensureDir will create the fixture folder if it does not already exist.
+func ensureDir(loc string) error {
+	s, err := os.Stat(loc)
+	switch {
+	case err != nil && os.IsNotExist(err):
+		// the location does not exist, so make directories to there
+		err = os.MkdirAll(loc, DirPerms)
 		if err != nil {
 			return err
 		}
+		return err
+	case err == nil && !s.IsDir():
+		return newErrFixtureDirectoryIsFile(loc)
+	default:
+		return err
 	}
-
-	return err
 }
 
 // goldenFileName simply returns the file name of the golden file fixture.

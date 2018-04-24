@@ -3,9 +3,11 @@ package goldie
 import (
 	"io/ioutil"
 	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestGoldenFileName(t *testing.T) {
@@ -56,10 +58,11 @@ func TestGoldenFileName(t *testing.T) {
 	}
 }
 
-func TestEnsureFixtureDir(t *testing.T) {
+func TestEnsureDir(t *testing.T) {
 	tests := []struct {
 		dir         string
 		shouldExist bool
+		fileExist   bool
 		err         interface{}
 	}{
 		{
@@ -73,30 +76,37 @@ func TestEnsureFixtureDir(t *testing.T) {
 			err:         nil,
 		},
 		{
-			dir:         "\"24348q0980fd/&&**D&S**SS:",
+			dir:         "now/still/works",
+			shouldExist: true,
+			err:         nil,
+		},
+		{
+			dir:         "this/will/not",
 			shouldExist: false,
-			err:         &os.PathError{},
+			fileExist:   true,
+			err:         newErrFixtureDirectoryIsFile(""),
 		},
 	}
 
 	for _, test := range tests {
-		oldFixtureDir := FixtureDir
-		FixtureDir = test.dir
+		target := filepath.Join(os.TempDir(), test.dir)
 
 		if test.shouldExist {
-			err := os.Mkdir(test.dir, 0755)
+			err := os.MkdirAll(target, 0755)
 			assert.Nil(t, err)
 		}
 
-		err := ensureFixtureDir()
+		if test.fileExist {
+			err := os.MkdirAll(filepath.Dir(target), 0755)
+			assert.Nil(t, err)
+
+			f, err := os.Create(target)
+			require.NoError(t, err)
+			f.Close()
+		}
+
+		err := ensureDir(target)
 		assert.IsType(t, test.err, err)
-
-		if err == nil {
-			err = os.RemoveAll(test.dir)
-			assert.Nil(t, err)
-		}
-
-		FixtureDir = oldFixtureDir
 	}
 }
 

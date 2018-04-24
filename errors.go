@@ -1,5 +1,7 @@
 package goldie
 
+import "fmt"
+
 // errFixtureNotFound is thrown when the fixture file could not be found.
 type errFixtureNotFound struct {
 	message string
@@ -32,4 +34,20 @@ func newErrFixtureMismatch(message string) errFixtureMismatch {
 
 func (e errFixtureMismatch) Error() string {
 	return e.message
+}
+
+// errFixtureDirecetoryIsFile is thrown when the fixture directory is a file
+type errFixtureDirectoryIsFile struct {
+	file string
+}
+
+// newFixtureDirectoryIsFile returns a new instance of the error.
+func newErrFixtureDirectoryIsFile(file string) errFixtureDirectoryIsFile {
+	return errFixtureDirectoryIsFile{
+		file: file,
+	}
+}
+
+func (e errFixtureDirectoryIsFile) Error() string {
+	return fmt.Sprintf("fixture folder is a file: %s", e.file)
 }

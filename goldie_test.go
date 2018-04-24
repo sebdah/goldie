@@ -173,11 +173,10 @@ func TestCompare(t *testing.T) {
 	}
 }
 
-
 func TestCompareTemplate(t *testing.T) {
 
 	data := struct {
-		Name	string
+		Name string
 	}{
 		Name: "example",
 	}
@@ -186,7 +185,7 @@ func TestCompareTemplate(t *testing.T) {
 		name         string
 		actualData   []byte
 		expectedData []byte
-		data		 interface{}
+		data         interface{}
 		update       bool
 		err          error
 	}{
@@ -194,7 +193,7 @@ func TestCompareTemplate(t *testing.T) {
 			name:         "example",
 			actualData:   []byte("abc example"),
 			expectedData: []byte("abc {{ .Name }}"),
-			data:		  data,
+			data:         data,
 			update:       true,
 			err:          nil,
 		},
@@ -202,7 +201,7 @@ func TestCompareTemplate(t *testing.T) {
 			name:         "example",
 			actualData:   []byte("abc example"),
 			expectedData: []byte("abc {{ .Name }}"),
-			data:		  nil,
+			data:         nil,
 			update:       false,
 			err:          errFixtureNotFound{},
 		},
@@ -210,7 +209,7 @@ func TestCompareTemplate(t *testing.T) {
 			name:         "example",
 			actualData:   []byte("bc example"),
 			expectedData: []byte("abc {{ .Name }}"),
-			data:		  nil,
+			data:         nil,
 			update:       true,
 			err:          errFixtureMismatch{},
 		},

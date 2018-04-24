@@ -60,7 +60,7 @@ func Assert(t *testing.T, name string, actualData []byte) {
 // `name` refers to the name of the test and it should typically be unique
 // within the package. Also it should be a valid file name (so keeping to
 // `a-z0-9\-\_` is a good idea).
-func AssertWithTemplate(t *testing.T, name string, data interface{} , actualData []byte) {
+func AssertWithTemplate(t *testing.T, name string, data interface{}, actualData []byte) {
 	if *update {
 		err := Update(name, actualData)
 		if err != nil {
@@ -82,7 +82,6 @@ func AssertWithTemplate(t *testing.T, name string, data interface{} , actualData
 		}
 	}
 }
-
 
 // Update will update the golden fixtures with the received actual data.
 //
@@ -126,7 +125,6 @@ func compare(name string, data interface{}, actualData []byte) error {
 	if err != nil {
 		return fmt.Errorf("Expected %s to be nil", err.Error())
 	}
-
 
 	if !bytes.Equal(actualData, expectedData.Bytes()) {
 		return newErrFixtureMismatch(

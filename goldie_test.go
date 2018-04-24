@@ -165,7 +165,64 @@ func TestCompare(t *testing.T) {
 			assert.Nil(t, err)
 		}
 
-		err := compare(test.name, test.actualData)
+		err := compare(test.name, nil, test.actualData)
+		assert.IsType(t, test.err, err)
+
+		err = os.RemoveAll(FixtureDir)
+		assert.Nil(t, err)
+	}
+}
+
+
+func TestCompareTemplate(t *testing.T) {
+
+	data := struct {
+		Name	string
+	}{
+		Name: "example",
+	}
+
+	tests := []struct {
+		name         string
+		actualData   []byte
+		expectedData []byte
+		data		 interface{}
+		update       bool
+		err          error
+	}{
+		{
+			name:         "example",
+			actualData:   []byte("abc example"),
+			expectedData: []byte("abc {{ .Name }}"),
+			data:		  data,
+			update:       true,
+			err:          nil,
+		},
+		{
+			name:         "example",
+			actualData:   []byte("abc example"),
+			expectedData: []byte("abc {{ .Name }}"),
+			data:		  nil,
+			update:       false,
+			err:          errFixtureNotFound{},
+		},
+		{
+			name:         "example",
+			actualData:   []byte("bc example"),
+			expectedData: []byte("abc {{ .Name }}"),
+			data:		  nil,
+			update:       true,
+			err:          errFixtureMismatch{},
+		},
+	}
+
+	for _, test := range tests {
+		if test.update {
+			err := Update(test.name, test.expectedData)
+			assert.Nil(t, err)
+		}
+
+		err := compare(test.name, test.data, test.actualData)
 		assert.IsType(t, test.err, err)
 
 		err = os.RemoveAll(FixtureDir)

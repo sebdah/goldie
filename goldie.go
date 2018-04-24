@@ -16,6 +16,7 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+	"text/template"
 )
 
 var (
@@ -49,7 +50,7 @@ var (
 // `name` refers to the name of the test and it should typically be unique
 // within the package. Also it should be a valid file name (so keeping to
 // `a-z0-9\-\_` is a good idea).
-func Assert(t *testing.T, name string, actualData []byte) {
+func Assert(t *testing.T, name string, data interface{}, actualData []byte) {
 	if *update {
 		err := Update(name, actualData)
 		if err != nil {
@@ -58,7 +59,7 @@ func Assert(t *testing.T, name string, actualData []byte) {
 		}
 	}
 
-	err := compare(name, actualData)
+	err := compare(name, data, actualData)
 	if err != nil {
 		switch err.(type) {
 		case errFixtureNotFound:
@@ -71,6 +72,17 @@ func Assert(t *testing.T, name string, actualData []byte) {
 		}
 	}
 }
+
+// Assert compares the actual data received with the expected data in the
+// golden files after executing it as a template with data parameter.
+// If the update flag is set, it will also update the golden file.
+// `name` refers to the name of the test and it should typically be unique
+// within the package. Also it should be a valid file name (so keeping to
+// `a-z0-9\-\_` is a good idea).
+func AssertWithTemplate(t *testing.T, name string, data interface{} , actualData []byte) {
+	Assert(t, name, nil, actualData)
+}
+
 
 // Update will update the golden fixtures with the received actual data.
 //
@@ -91,10 +103,11 @@ func Update(name string, actualData []byte) error {
 	return nil
 }
 
-// compare is reading the golden fixture file and compate the stored data with
+// compare is reading the golden fixture file and compare the stored data with
 // the actual data.
-func compare(name string, actualData []byte) error {
-	expectedData, err := ioutil.ReadFile(goldenFileName(name))
+func compare(name string, data interface{}, actualData []byte) error {
+	expectedDataTmpl, err := ioutil.ReadFile(goldenFileName(name))
+
 	if err != nil {
 		if os.IsNotExist(err) {
 			return newErrFixtureNotFound()
@@ -103,12 +116,24 @@ func compare(name string, actualData []byte) error {
 		return fmt.Errorf("Expected %s to be nil", err.Error())
 	}
 
-	if !bytes.Equal(actualData, expectedData) {
+	tmpl, err := template.New("test").Parse(string(expectedDataTmpl))
+	if err != nil {
+		return fmt.Errorf("Expected %s to be nil", err.Error())
+	}
+
+	var expectedData bytes.Buffer
+	err = tmpl.Execute(&expectedData, data)
+	if err != nil {
+		return fmt.Errorf("Expected %s to be nil", err.Error())
+	}
+
+
+	if !bytes.Equal(actualData, expectedData.Bytes()) {
 		return newErrFixtureMismatch(
 			fmt.Sprintf("Result did not match the golden fixture.\n"+
 				"Expected: %s\n"+
 				"Got: %s",
-				string(expectedData),
+				string(expectedData.Bytes()),
 				string(actualData)))
 	}
 

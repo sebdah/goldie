@@ -138,16 +138,12 @@ func ensureDir(loc string) error {
 	switch {
 	case err != nil && os.IsNotExist(err):
 		// the location does not exist, so make directories to there
-		err = os.MkdirAll(loc, DirPerms)
-		if err != nil {
-			return err
-		}
-		return err
+		return os.MkdirAll(loc, DirPerms)
 	case err == nil && !s.IsDir():
 		return newErrFixtureDirectoryIsFile(loc)
-	default:
-		return err
 	}
+
+	return err
 }
 
 // goldenFileName simply returns the file name of the golden file fixture.

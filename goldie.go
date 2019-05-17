@@ -51,7 +51,26 @@ var (
 // within the package. Also it should be a valid file name (so keeping to
 // `a-z0-9\-\_` is a good idea).
 func Assert(t *testing.T, name string, actualData []byte) {
-	AssertWithTemplate(t, name, nil, actualData)
+	if *update {
+		err := Update(name, actualData)
+		if err != nil {
+			t.Error(err)
+			t.FailNow()
+		}
+	}
+
+	err := compare(name, actualData)
+	if err != nil {
+		switch err.(type) {
+		case errFixtureNotFound:
+			t.Error(err)
+			t.FailNow()
+		case errFixtureMismatch:
+			t.Error(err)
+		default:
+			t.Error(err)
+		}
+	}
 }
 
 // Assert compares the actual data received with the expected data in the
@@ -69,7 +88,7 @@ func AssertWithTemplate(t *testing.T, name string, data interface{}, actualData 
 		}
 	}
 
-	err := compare(name, data, actualData)
+	err := compareTemplate(name, data, actualData)
 	if err != nil {
 		switch err.(type) {
 		case errFixtureNotFound:
@@ -98,7 +117,32 @@ func Update(name string, actualData []byte) error {
 
 // compare is reading the golden fixture file and compare the stored data with
 // the actual data.
-func compare(name string, data interface{}, actualData []byte) error {
+func compare(name string, actualData []byte) error {
+	expectedData, err := ioutil.ReadFile(goldenFileName(name))
+
+	if err != nil {
+		if os.IsNotExist(err) {
+			return newErrFixtureNotFound()
+		}
+
+		return fmt.Errorf("Expected %s to be nil", err.Error())
+	}
+
+	if !bytes.Equal(actualData, expectedData) {
+		return newErrFixtureMismatch(
+			fmt.Sprintf("Result did not match the golden fixture.\n"+
+				"Expected: %s\n"+
+				"Got: %s",
+				string(expectedData),
+				string(actualData)))
+	}
+
+	return nil
+}
+
+// compareTemplate is reading the golden fixture file and compare the stored
+// data with the actual data.
+func compareTemplate(name string, data interface{}, actualData []byte) error {
 	expectedDataTmpl, err := ioutil.ReadFile(goldenFileName(name))
 
 	if err != nil {

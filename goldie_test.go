@@ -175,7 +175,7 @@ func TestCompare(t *testing.T) {
 			assert.Nil(t, err)
 		}
 
-		err := compare(test.name, nil, test.actualData)
+		err := compare(test.name, test.actualData)
 		assert.IsType(t, test.err, err)
 
 		err = os.RemoveAll(FixtureDir)
@@ -231,7 +231,7 @@ func TestCompareTemplate(t *testing.T) {
 			assert.Nil(t, err)
 		}
 
-		err := compare(test.name, test.data, test.actualData)
+		err := compareTemplate(test.name, test.data, test.actualData)
 		assert.IsType(t, test.err, err)
 
 		err = os.RemoveAll(FixtureDir)

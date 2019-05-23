@@ -4,6 +4,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"reflect"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -167,6 +168,13 @@ func TestCompare(t *testing.T) {
 			update:       true,
 			err:          errFixtureMismatch{},
 		},
+		{
+			name:         "nil",
+			actualData:   nil,
+			expectedData: nil,
+			update:       true,
+			err:          nil,
+		},
 	}
 
 	for _, test := range tests {
@@ -236,5 +244,26 @@ func TestCompareTemplate(t *testing.T) {
 
 		err = os.RemoveAll(FixtureDir)
 		assert.Nil(t, err)
+	}
+}
+
+func TestNormalizeLF(t *testing.T) {
+	tests := []struct {
+		name         string
+		inputData    []byte
+		expectedData []byte
+	}{
+		{"windows-style", []byte("Hello\r\nWorld"), []byte("Hello\nWorld")},
+		{"mac-style", []byte("Hello\rWorld"), []byte("Hello\nWorld")},
+		{"unix-style", []byte("Hello\nWorld"), []byte("Hello\nWorld")},
+		{"empty-slice", []byte(""), []byte{}},
+		{"nil-input", nil, nil},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if actualData := normalizeLF(tt.inputData); !reflect.DeepEqual(actualData, tt.expectedData) {
+				t.Errorf("normalizeLF() = %v, want %v", actualData, tt.expectedData)
+			}
+		})
 	}
 }

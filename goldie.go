@@ -10,6 +10,7 @@ package goldie
 
 import (
 	"bytes"
+	"encoding/json"
 	"flag"
 	"fmt"
 	"io/ioutil"
@@ -71,6 +72,38 @@ func Assert(t *testing.T, name string, actualData []byte) {
 			t.Error(err)
 		}
 	}
+}
+
+// AssertJson compares the actual json data received with expected data in the
+// golden files. If the update flag is set, it will also update the golden
+// file.
+//
+// `name` refers to the name of the test and it should typically be unique
+// within the package. Also it should be a valid file name (so keeping to
+// `a-z0-9\-\_` is a good idea).
+func AssertJson(t *testing.T, name string, actualJsonData interface{}) {
+	js, err := json.MarshalIndent(actualJsonData, "", "  ")
+
+	if err != nil {
+		t.Error(err)
+		t.FailNow()
+	}
+
+	Assert(t, name, normalizeLF(js))
+}
+
+// normalizeLF normalizes line feed character set across os (es)
+// \r\n (windows) & \r (mac) into \n (unix)
+func normalizeLF(d []byte) []byte {
+	// if empty / nil return as is
+	if len(d) == 0 {
+		return d
+	}
+	// replace CR LF \r\n (windows) with LF \n (unix)
+	d = bytes.Replace(d, []byte{13, 10}, []byte{10}, -1)
+	// replace CF \r (mac) with LF \n (unix)
+	d = bytes.Replace(d, []byte{13}, []byte{10}, -1)
+	return d
 }
 
 // Assert compares the actual data received with the expected data in the

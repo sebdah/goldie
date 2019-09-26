@@ -26,8 +26,8 @@ import (
 )
 
 // Compile time assurance
-var _ Tester = &goldie{}
-var _ OptionProcessor = &goldie{}
+var _ Tester = (*goldie)(nil)
+var _ OptionProcessor = (*goldie)(nil)
 
 type goldie struct {
 	fixtureDir     string

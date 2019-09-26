@@ -93,7 +93,7 @@ func TestNewExample(t *testing.T) {
         goldie.WithTestNameForDir(true),
     )
 
-    g.Assert(t, "example", "my example data")
+    g.Assert(t, "example", []byte("my example data"))
 }
 
 ```

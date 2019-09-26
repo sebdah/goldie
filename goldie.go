@@ -25,6 +25,10 @@ import (
 	"github.com/sergi/go-diff/diffmatchpatch"
 )
 
+// Compile time assurance
+var _ Tester = &goldie{}
+var _ OptionProcessor = &goldie{}
+
 type goldie struct {
 	fixtureDir     string
 	fileNameSuffix string

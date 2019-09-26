@@ -44,7 +44,7 @@ type Tester interface {
 	Assert(t *testing.T, name string, actualData []byte)
 	AssertJson(t *testing.T, name string, actualJsonData interface{})
 	AssertWithTemplate(t *testing.T, name string, data interface{}, actualData []byte)
-	Update(name string, actualData []byte) error
+	Update(t *testing.T, name string, actualData []byte) error
 }
 
 // DiffFn takes in an actual and expected and will return a diff string

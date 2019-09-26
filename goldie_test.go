@@ -1,6 +1,7 @@
 package goldie
 
 import (
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -45,17 +46,13 @@ func TestGoldenFileName(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		oldFixtureDir := FixtureDir
-		oldFileNameSuffix := FileNameSuffix
+		g := New(t,
+			WithFixtureDir(test.dir),
+			WithNameSuffix(test.suffix),
+		)
 
-		FixtureDir = test.dir
-		FileNameSuffix = test.suffix
-
-		filename := goldenFileName(test.name)
+		filename := g.goldenFileName(t, test.name)
 		assert.Equal(t, test.expected, filename)
-
-		FixtureDir = oldFixtureDir
-		FileNameSuffix = oldFileNameSuffix
 	}
 }
 
@@ -89,6 +86,8 @@ func TestEnsureDir(t *testing.T) {
 		},
 	}
 
+	g := New(t)
+
 	for _, test := range tests {
 		target := filepath.Join(os.TempDir(), test.dir)
 
@@ -106,7 +105,7 @@ func TestEnsureDir(t *testing.T) {
 			f.Close()
 		}
 
-		err := ensureDir(target)
+		err := g.ensureDir(target)
 		assert.IsType(t, test.err, err)
 	}
 }
@@ -126,15 +125,17 @@ func TestUpdate(t *testing.T) {
 		},
 	}
 
+	g := New(t)
+
 	for _, test := range tests {
-		err := Update(test.name, test.data)
+		err := g.Update(t, test.name, test.data)
 		assert.Equal(t, test.err, err)
 
-		data, err := ioutil.ReadFile(goldenFileName(test.name))
+		data, err := ioutil.ReadFile(g.goldenFileName(t, test.name))
 		assert.Nil(t, err)
 		assert.Equal(t, test.data, data)
 
-		err = os.RemoveAll(FixtureDir)
+		err = os.RemoveAll(g.fixtureDir)
 		assert.Nil(t, err)
 	}
 }
@@ -159,14 +160,14 @@ func TestCompare(t *testing.T) {
 			actualData:   []byte("abc"),
 			expectedData: []byte("abc"),
 			update:       false,
-			err:          errFixtureNotFound{},
+			err:          &errFixtureNotFound{},
 		},
 		{
 			name:         "example",
 			actualData:   []byte("bc"),
 			expectedData: []byte("abc"),
 			update:       true,
-			err:          errFixtureMismatch{},
+			err:          &errFixtureMismatch{},
 		},
 		{
 			name:         "nil",
@@ -177,16 +178,19 @@ func TestCompare(t *testing.T) {
 		},
 	}
 
+	g := New(t)
+
 	for _, test := range tests {
 		if test.update {
-			err := Update(test.name, test.expectedData)
+			err := g.Update(t, test.name, test.expectedData)
 			assert.Nil(t, err)
 		}
 
-		err := compare(test.name, test.actualData)
+		err := g.compare(t, test.name, test.actualData)
 		assert.IsType(t, test.err, err)
 
-		err = os.RemoveAll(FixtureDir)
+		g.goldenFileName(t, test.name)
+		err = os.RemoveAll(filepath.Dir(g.goldenFileName(t, test.name)))
 		assert.Nil(t, err)
 	}
 }
@@ -221,7 +225,15 @@ func TestCompareTemplate(t *testing.T) {
 			expectedData: []byte("abc {{ .Name }}"),
 			data:         nil,
 			update:       false,
-			err:          errFixtureNotFound{},
+			err:          &errFixtureNotFound{},
+		},
+		{
+			name:         "example",
+			actualData:   []byte("bc example"),
+			expectedData: []byte("abc {{ .Name }}"),
+			data:         data,
+			update:       true,
+			err:          &errFixtureMismatch{},
 		},
 		{
 			name:         "example",
@@ -229,21 +241,24 @@ func TestCompareTemplate(t *testing.T) {
 			expectedData: []byte("abc {{ .Name }}"),
 			data:         nil,
 			update:       true,
-			err:          errFixtureMismatch{},
-		},
-	}
+			err:          &errMissingKey{},
+		}}
+
+	g := New(t)
 
 	for _, test := range tests {
-		if test.update {
-			err := Update(test.name, test.expectedData)
+		t.Run(test.name, func(t *testing.T) {
+			if test.update {
+				err := g.Update(t, test.name, test.expectedData)
+				assert.Nil(t, err)
+			}
+
+			err := g.compareTemplate(t, test.name, test.data, test.actualData)
+			assert.IsType(t, test.err, err)
+
+			err = os.RemoveAll(g.fixtureDir)
 			assert.Nil(t, err)
-		}
-
-		err := compareTemplate(test.name, test.data, test.actualData)
-		assert.IsType(t, test.err, err)
-
-		err = os.RemoveAll(FixtureDir)
-		assert.Nil(t, err)
+		})
 	}
 }
 
@@ -266,4 +281,90 @@ func TestNormalizeLF(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestDiffEngines(t *testing.T) {
+	type engine struct {
+		engine DiffProcessor
+		diff   string
+	}
+
+	tests := []struct {
+		name     string
+		actual   string
+		expected string
+		engines  []engine
+	}{
+		{
+			name:     "lorem",
+			actual:   "Lorem ipsum dolor.",
+			expected: "Lorem dolor sit amet.",
+			engines: []engine{
+				{engine: ClassicDiff, diff: `--- Expected
++++ Actual
+@@ -1 +1 @@
+-Lorem dolor sit amet.
++Lorem ipsum dolor.
+`},
+				{engine: ColoredDiff, diff: "Lorem \x1b[31mipsum \x1b[0mdolor\x1b[32m sit amet\x1b[0m."},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		for _, e := range tt.engines {
+			diff := diff(e.engine, tt.actual, tt.expected)
+			assert.Equal(t, e.diff, diff)
+		}
+	}
+
+}
+
+func TestNewExample(t *testing.T) {
+	tests := []struct {
+		fixtureDir  string // This will get removed from the file system for each test
+		suffix      string
+		subTestName string
+		filePrefix  string
+	}{
+		{
+			fixtureDir:  "test-fixtures",
+			suffix:      ".golden.json",
+			subTestName: "subtestname",
+			filePrefix:  "example",
+		},
+	}
+
+	sampleData := []byte("sample data")
+
+	for _, tt := range tests {
+		g := New(t,
+			WithFixtureDir(tt.fixtureDir),
+			WithNameSuffix(tt.suffix),
+			WithTestNameForDir(true),
+			WithSubTestNameForDir(true),
+		)
+
+		t.Run(tt.subTestName, func(t *testing.T) {
+			g.Update(t, tt.filePrefix, sampleData)
+			g.Assert(t, tt.filePrefix, sampleData)
+		})
+
+		fullpath := fmt.Sprintf("%s%s",
+			filepath.Join(
+				tt.fixtureDir,
+				"TestNewExample",
+				tt.subTestName,
+				tt.filePrefix,
+			),
+			tt.suffix,
+		)
+
+		_, err := os.Stat(fullpath)
+		assert.Nil(t, err)
+
+		os.RemoveAll(tt.fixtureDir)
+		assert.Nil(t, err)
+	}
+
 }

@@ -24,6 +24,7 @@ what is present in the golden test file.
 
 ```
 func TestExample(t *testing.T) {
+    g := goldie.New(t)
     recorder := httptest.NewRecorder()
 
     req, err := http.NewRequest("GET", "/example", nil)
@@ -32,14 +33,14 @@ func TestExample(t *testing.T) {
     handler := http.HandlerFunc(ExampleHandler)
     handler.ServeHTTP()
 
-    goldie.Assert(t, "example", recorder.Body.Bytes())
+    g.Assert(t, "example", recorder.Body.Bytes())
 }
 ```
 
 ## Using template golden file
 
 If some values in the golden file can change depending on the test, you can use golang
-template in the golden file and pass the data to `goldie.AssertWithTemplate`.
+template in the golden file and pass the data to `AssertWithTemplate`.
 
 ### example.golden
 ```
@@ -49,6 +50,8 @@ This is a {{ .Type }} file.
 ### Test
 ```
 func TestTemplateExample(t *testing.T) {
+    g := goldie.New(t)
+
     recorder := httptest.NewRecorder()
 
     req, err := http.NewRequest("POST", "/example/Golden", nil)
@@ -63,7 +66,7 @@ func TestTemplateExample(t *testing.T) {
         Type:	"Golden",
     }
 
-    goldie.AssertWithTemplate(t, "example", data, recorder.Body.Bytes())
+    g.AssertWithTemplate(t, "example", data, recorder.Body.Bytes())
 }
 ```
 
@@ -76,6 +79,25 @@ drop the `-update` flag.
 
 `go test ./...`
 
+## Options
+`goldie` supports a number of configuration options that will alter the behavior
+of the library.  These options should be passed into the `goldie.New()` method.
+
+```
+func TestNewExample(t *testing.T) {
+    g := goldie.New(
+        t,
+        goldie.WithFixtureDir("test-fixtures"),
+        goldie.WithNameSuffix(".golden.json"),
+        goldie.WithDiffEngine(goldie.ColoredDiff),
+        goldie.WithTestNameForDir(true),
+    )
+
+    g.Assert(t, "example", "my example data")
+}
+
+```
+
 ## FAQ
 
 ### Do you need any help in the project?
@@ -83,7 +105,6 @@ drop the `-update` flag.
 Yes, please! Pull requests are most welcome. On the wish list:
 
 - Unit tests.
-- Better output for failed tests. A diff of some sort would be great.
 
 ### Why the name `goldie`?
 

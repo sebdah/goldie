@@ -11,7 +11,7 @@ func TestErrFixtureNotFound(t *testing.T) {
 	err := newErrFixtureNotFound()
 
 	assert.Equal(t, expected, err.Error())
-	assert.IsType(t, errFixtureNotFound{}, err)
+	assert.IsType(t, &errFixtureNotFound{}, err)
 }
 
 func TestErrFixtureMismatch(t *testing.T) {
@@ -19,7 +19,7 @@ func TestErrFixtureMismatch(t *testing.T) {
 	err := newErrFixtureMismatch(message)
 
 	assert.Equal(t, message, err.Error())
-	assert.IsType(t, errFixtureMismatch{}, err)
+	assert.IsType(t, &errFixtureMismatch{}, err)
 }
 
 func TestErrFixtureDirectoryIsFile(t *testing.T) {
@@ -28,5 +28,5 @@ func TestErrFixtureDirectoryIsFile(t *testing.T) {
 	err := newErrFixtureDirectoryIsFile(location)
 
 	assert.Equal(t, message, err.Error())
-	assert.IsType(t, errFixtureDirectoryIsFile{}, err)
+	assert.IsType(t, &errFixtureDirectoryIsFile{}, err)
 }

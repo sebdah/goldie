@@ -20,9 +20,6 @@ import (
 	"text/template"
 
 	"errors"
-
-	"github.com/pmezard/go-difflib/difflib"
-	"github.com/sergi/go-diff/diffmatchpatch"
 )
 
 // Compile time assurance
@@ -35,7 +32,7 @@ type goldie struct {
 	filePerms      os.FileMode
 	dirPerms       os.FileMode
 
-	diffProcessor        DiffProcessor
+	diffEngine           DiffEngine
 	diffFn               DiffFn
 	ignoreTemplateErrors bool
 	useTestNameForDir    bool
@@ -64,8 +61,8 @@ func (g *goldie) WithDirPerms(mode os.FileMode) error {
 	return nil
 }
 
-func (g *goldie) WithDiffEngine(engine DiffProcessor) error {
-	g.diffProcessor = engine
+func (g *goldie) WithDiffEngine(engine DiffEngine) error {
+	g.diffEngine = engine
 	return nil
 }
 
@@ -229,12 +226,12 @@ func (g *goldie) compare(t *testing.T, name string, actualData []byte) error {
 		actual := string(actualData)
 		expected := string(expectedData)
 
-		if g.diffFn != nil || g.diffProcessor != UndefinedDiff {
+		if g.diffFn != nil || g.diffEngine != UndefinedDiff {
 			var d string
 			if g.diffFn != nil {
 				d = g.diffFn(actual, expected)
 			} else {
-				d = diff(g.diffProcessor, actual, expected)
+				d = Diff(g.diffEngine, actual, expected)
 			}
 
 			msg += "Diff is below:\n" + d
@@ -249,28 +246,6 @@ func (g *goldie) compare(t *testing.T, name string, actualData []byte) error {
 	}
 
 	return nil
-}
-
-func diff(engine DiffProcessor, actual string, expected string) string {
-	var diff string
-	switch engine {
-	case ClassicDiff:
-		diff, _ = difflib.GetUnifiedDiffString(difflib.UnifiedDiff{
-			A:        difflib.SplitLines(expected),
-			B:        difflib.SplitLines(actual),
-			FromFile: "Expected",
-			FromDate: "",
-			ToFile:   "Actual",
-			ToDate:   "",
-			Context:  1,
-		})
-
-	case ColoredDiff:
-		dmp := diffmatchpatch.New()
-		diffs := dmp.DiffMain(actual, expected, false)
-		diff = dmp.DiffPrettyText(diffs)
-	}
-	return diff
 }
 
 // compareTemplate is reading the golden fixture file and compare the stored

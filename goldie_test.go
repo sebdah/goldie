@@ -285,7 +285,7 @@ func TestNormalizeLF(t *testing.T) {
 
 func TestDiffEngines(t *testing.T) {
 	type engine struct {
-		engine DiffProcessor
+		engine DiffEngine
 		diff   string
 	}
 
@@ -313,7 +313,7 @@ func TestDiffEngines(t *testing.T) {
 
 	for _, tt := range tests {
 		for _, e := range tt.engines {
-			diff := diff(e.engine, tt.actual, tt.expected)
+			diff := Diff(e.engine, tt.actual, tt.expected)
 			assert.Equal(t, e.diff, diff)
 		}
 	}

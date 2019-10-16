@@ -24,7 +24,6 @@ what is present in the golden test file.
 
 ```
 func TestExample(t *testing.T) {
-    g := goldie.New(t)
     recorder := httptest.NewRecorder()
 
     req, err := http.NewRequest("GET", "/example", nil)
@@ -33,6 +32,7 @@ func TestExample(t *testing.T) {
     handler := http.HandlerFunc(ExampleHandler)
     handler.ServeHTTP()
 
+    g := goldie.New(t)
     g.Assert(t, "example", recorder.Body.Bytes())
 }
 ```
@@ -50,8 +50,6 @@ This is a {{ .Type }} file.
 ### Test
 ```
 func TestTemplateExample(t *testing.T) {
-    g := goldie.New(t)
-
     recorder := httptest.NewRecorder()
 
     req, err := http.NewRequest("POST", "/example/Golden", nil)
@@ -66,6 +64,7 @@ func TestTemplateExample(t *testing.T) {
         Type:	"Golden",
     }
 
+    g := goldie.New(t)
     g.AssertWithTemplate(t, "example", data, recorder.Body.Bytes())
 }
 ```

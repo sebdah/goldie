@@ -11,6 +11,7 @@ package goldie
 import (
 	"bytes"
 	"encoding/json"
+	"flag"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -20,11 +21,33 @@ import (
 	"text/template"
 
 	"errors"
+
+	"github.com/pmezard/go-difflib/difflib"
+	"github.com/sergi/go-diff/diffmatchpatch"
 )
 
-// Compile time assurance
-var _ Tester = (*goldie)(nil)
-var _ OptionProcessor = (*goldie)(nil)
+const (
+	// FixtureDir is the folder name for where the fixtures are stored. It's
+	// relative to the "go test" path.
+	defaultFixtureDir = "testdata"
+
+	// FileNameSuffix is the suffix appended to the fixtures. Set to empty
+	// string to disable file name suffixes.
+	defaultFileNameSuffix = ".golden"
+
+	// FilePerms is used to set the permissions on the golden fixture files.
+	defaultFilePerms os.FileMode = 0644
+
+	// DirPerms is used to set the permissions on the golden fixture folder.
+	defaultDirPerms os.FileMode = 0755
+)
+
+var (
+	// update determines if the actual received data should be written to the
+	// golden files or not. This should be true when you need to update the
+	// data, but false when actually running the tests.
+	update = flag.Bool("update", false, "Update golden test file fixture")
+)
 
 type goldie struct {
 	fixtureDir     string
@@ -37,6 +60,55 @@ type goldie struct {
 	ignoreTemplateErrors bool
 	useTestNameForDir    bool
 	useSubTestNameForDir bool
+}
+
+// === Create new testers ==================================
+
+// New creates a new golden file tester. If there is an issue with applying any
+// of the options, an error will be reported and t.FailNow() will be called.
+func New(t *testing.T, options ...Option) *goldie {
+	g := goldie{
+		fixtureDir:     defaultFixtureDir,
+		fileNameSuffix: defaultFileNameSuffix,
+		filePerms:      defaultFilePerms,
+		dirPerms:       defaultDirPerms,
+	}
+
+	var err error
+	for _, option := range options {
+		err = option(&g)
+		if err != nil {
+			t.Error(fmt.Errorf("Could not apply option: %w", err))
+			t.FailNow()
+		}
+	}
+
+	return &g
+}
+
+// Diff generates a string that shows the difference between the actual and the
+// expected. This method could be called in your own DiffFn in case you want
+// to leverage any of the engines defined.
+func Diff(engine DiffEngine, actual string, expected string) string {
+	var diff string
+	switch engine {
+	case ClassicDiff:
+		diff, _ = difflib.GetUnifiedDiffString(difflib.UnifiedDiff{
+			A:        difflib.SplitLines(expected),
+			B:        difflib.SplitLines(actual),
+			FromFile: "Expected",
+			FromDate: "",
+			ToFile:   "Actual",
+			ToDate:   "",
+			Context:  1,
+		})
+
+	case ColoredDiff:
+		dmp := diffmatchpatch.New()
+		diffs := dmp.DiffMain(actual, expected, false)
+		diff = dmp.DiffPrettyText(diffs)
+	}
+	return diff
 }
 
 // === OptionProcessor ===============================

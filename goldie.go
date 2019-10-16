@@ -1,5 +1,5 @@
-// Package goldie provides test assertions based on golden files. It's typically
-// used for testing responses with larger data bodies.
+// Package goldie provides test assertions based on golden files. It's
+// typically used for testing responses with larger data bodies.
 //
 // The concept is straight forward. Valid response data is stored in a "golden
 // file". The actual response data will be byte compared with the golden file
@@ -158,11 +158,11 @@ func normalizeLF(d []byte) []byte {
 }
 
 // Assert compares the actual data received with the expected data in the
-// golden files after executing it as a template with data parameter.
-// If the update flag is set, it will also update the golden file.
-// `name` refers to the name of the test and it should typically be unique
-// within the package. Also it should be a valid file name (so keeping to
-// `a-z0-9\-\_` is a good idea).
+// golden files after executing it as a template with data parameter. If the
+// update flag is set, it will also update the golden file.  `name` refers to
+// the name of the test and it should typically be unique within the package.
+// Also it should be a valid file name (so keeping to `a-z0-9\-\_` is a good
+// idea).
 func (g *goldie) AssertWithTemplate(t *testing.T, name string, data interface{}, actualData []byte) {
 	if *update {
 		err := g.Update(t, name, actualData)
@@ -197,8 +197,8 @@ func (g *goldie) AssertWithTemplate(t *testing.T, name string, data interface{},
 
 // Update will update the golden fixtures with the received actual data.
 //
-// This method does not need to be called from code, but it's exposed so that it
-// can be explicitly called if needed. The more common approach would be to
+// This method does not need to be called from code, but it's exposed so that
+// it can be explicitly called if needed. The more common approach would be to
 // update using `go test -update ./...`.
 func (g *goldie) Update(t *testing.T, name string, actualData []byte) error {
 	if err := g.ensureDir(filepath.Dir(g.goldenFileName(t, name))); err != nil {

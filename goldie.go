@@ -91,6 +91,7 @@ func New(t *testing.T, options ...Option) *goldie {
 // to leverage any of the engines defined.
 func Diff(engine DiffEngine, actual string, expected string) string {
 	var diff string
+
 	switch engine {
 	case ClassicDiff:
 		diff, _ = difflib.GetUnifiedDiffString(difflib.UnifiedDiff{
@@ -108,6 +109,7 @@ func Diff(engine DiffEngine, actual string, expected string) string {
 		diffs := dmp.DiffMain(actual, expected, false)
 		diff = dmp.DiffPrettyText(diffs)
 	}
+
 	return diff
 }
 

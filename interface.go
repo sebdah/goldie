@@ -77,10 +77,6 @@ const (
 // a tester.  To expand this list, add a function to this interface and then
 // implement the generic option setter below.
 type OptionProcessor interface {
-	// WithFixtureDir sets the directory that will be used to store the
-	// fixtures.
-	//
-	// Defaults to `testdata`.
 	WithFixtureDir(dir string) error
 	WithNameSuffix(suffix string) error
 	WithFilePerms(mode os.FileMode) error
@@ -95,6 +91,9 @@ type OptionProcessor interface {
 
 // === OptionProcessor ===============================
 
+// WithFixtureDir sets the fixture directory.
+//
+// Defaults to `testdata`
 func WithFixtureDir(dir string) Option {
 	return func(o OptionProcessor) error {
 		return o.WithFixtureDir(dir)

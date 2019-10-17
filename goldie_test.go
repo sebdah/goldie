@@ -196,7 +196,6 @@ func TestCompare(t *testing.T) {
 }
 
 func TestCompareTemplate(t *testing.T) {
-
 	data := struct {
 		Name string
 	}{

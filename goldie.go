@@ -344,6 +344,7 @@ func (g *goldie) compare(t *testing.T, name string, actualData []byte) error {
 				expected,
 				actual)
 		}
+
 		return newErrFixtureMismatch(msg)
 	}
 
@@ -379,12 +380,28 @@ func (g *goldie) compareTemplate(t *testing.T, name string, data interface{}, ac
 	}
 
 	if !bytes.Equal(actualData, expectedData.Bytes()) {
-		return newErrFixtureMismatch(
-			fmt.Sprintf("Result did not match the golden fixture.\n"+
-				"Expected: %s\n"+
+		msg := "Result did not match the golden fixture.\n"
+		actual := string(actualData)
+		expected := expectedData.String()
+
+		if g.diffFn != nil || g.diffEngine != UndefinedDiff {
+			var d string
+			if g.diffFn != nil {
+				d = g.diffFn(actual, expected)
+			} else {
+				d = Diff(g.diffEngine, actual, expected)
+			}
+
+			msg += "Diff is below:\n" + d
+		} else {
+			msg = fmt.Sprintf("%sExpected: %s\n"+
 				"Got: %s",
-				string(expectedData.Bytes()),
-				string(actualData)))
+				msg,
+				expected,
+				actual)
+		}
+
+		return newErrFixtureMismatch(msg)
 	}
 
 	return nil

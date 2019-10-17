@@ -33,7 +33,7 @@ func TestExample(t *testing.T) {
     handler.ServeHTTP()
 
     g := goldie.New(t)
-    g.Assert(t, "example", recorder.Body.Bytes())
+    g.Assert("example", recorder.Body.Bytes())
 }
 ```
 
@@ -65,7 +65,7 @@ func TestTemplateExample(t *testing.T) {
     }
 
     g := goldie.New(t)
-    g.AssertWithTemplate(t, "example", data, recorder.Body.Bytes())
+    g.AssertWithTemplate("example", data, recorder.Body.Bytes())
 }
 ```
 
@@ -92,7 +92,7 @@ func TestNewExample(t *testing.T) {
         goldie.WithTestNameForDir(true),
     )
 
-    g.Assert(t, "example", []byte("my example data"))
+    g.Assert("example", []byte("my example data"))
 }
 
 ```

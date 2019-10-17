@@ -2,7 +2,6 @@ package goldie
 
 import (
 	"os"
-	"testing"
 )
 
 // Compile time assurance
@@ -15,10 +14,10 @@ type Option func(OptionProcessor) error
 
 // Tester defines the methods that any golden tester should support.
 type Tester interface {
-	Assert(t *testing.T, name string, actualData []byte)
-	AssertJson(t *testing.T, name string, actualJsonData interface{})
-	AssertWithTemplate(t *testing.T, name string, data interface{}, actualData []byte)
-	Update(t *testing.T, name string, actualData []byte) error
+	Assert(name string, actualData []byte)
+	AssertJson(name string, actualJsonData interface{})
+	AssertWithTemplate(name string, data interface{}, actualData []byte)
+	Update(name string, actualData []byte) error
 }
 
 // DiffFn takes in an actual and expected and will return a diff string

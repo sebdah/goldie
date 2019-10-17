@@ -55,6 +55,8 @@ type goldie struct {
 	filePerms      os.FileMode
 	dirPerms       os.FileMode
 
+	t *testing.T
+
 	diffEngine           DiffEngine
 	diffFn               DiffFn
 	ignoreTemplateErrors bool
@@ -68,6 +70,7 @@ type goldie struct {
 // of the options, an error will be reported and t.FailNow() will be called.
 func New(t *testing.T, options ...Option) *goldie {
 	g := goldie{
+		t:              t,
 		fixtureDir:     defaultFixtureDir,
 		fileNameSuffix: defaultFileNameSuffix,
 		filePerms:      defaultFilePerms,
@@ -195,22 +198,22 @@ func (g *goldie) WithSubTestNameForDir(use bool) error {
 // `name` refers to the name of the test and it should typically be unique
 // within the package. Also it should be a valid file name (so keeping to
 // `a-z0-9\-\_` is a good idea).
-func (g *goldie) Assert(t *testing.T, name string, actualData []byte) {
+func (g *goldie) Assert(name string, actualData []byte) {
 	if *update {
-		err := g.Update(t, name, actualData)
+		err := g.Update(name, actualData)
 		if err != nil {
-			t.Error(err)
-			t.FailNow()
+			g.t.Error(err)
+			g.t.FailNow()
 		}
 	}
 
-	err := g.compare(t, name, actualData)
+	err := g.compare(name, actualData)
 	if err != nil {
 		{
 			var e *errFixtureNotFound
 			if errors.As(err, &e) {
-				t.Error(err)
-				t.FailNow()
+				g.t.Error(err)
+				g.t.FailNow()
 				return
 			}
 		}
@@ -218,12 +221,12 @@ func (g *goldie) Assert(t *testing.T, name string, actualData []byte) {
 		{
 			var e *errFixtureMismatch
 			if errors.As(err, &e) {
-				t.Error(err)
+				g.t.Error(err)
 				return
 			}
 		}
 
-		t.Error(err)
+		g.t.Error(err)
 	}
 }
 
@@ -234,15 +237,15 @@ func (g *goldie) Assert(t *testing.T, name string, actualData []byte) {
 // `name` refers to the name of the test and it should typically be unique
 // within the package. Also it should be a valid file name (so keeping to
 // `a-z0-9\-\_` is a good idea).
-func (g *goldie) AssertJson(t *testing.T, name string, actualJsonData interface{}) {
+func (g *goldie) AssertJson(name string, actualJsonData interface{}) {
 	js, err := json.MarshalIndent(actualJsonData, "", "  ")
 
 	if err != nil {
-		t.Error(err)
-		t.FailNow()
+		g.t.Error(err)
+		g.t.FailNow()
 	}
 
-	g.Assert(t, name, normalizeLF(js))
+	g.Assert(name, normalizeLF(js))
 }
 
 // normalizeLF normalizes line feed character set across os (es)
@@ -265,22 +268,22 @@ func normalizeLF(d []byte) []byte {
 // the name of the test and it should typically be unique within the package.
 // Also it should be a valid file name (so keeping to `a-z0-9\-\_` is a good
 // idea).
-func (g *goldie) AssertWithTemplate(t *testing.T, name string, data interface{}, actualData []byte) {
+func (g *goldie) AssertWithTemplate(name string, data interface{}, actualData []byte) {
 	if *update {
-		err := g.Update(t, name, actualData)
+		err := g.Update(name, actualData)
 		if err != nil {
-			t.Error(err)
-			t.FailNow()
+			g.t.Error(err)
+			g.t.FailNow()
 		}
 	}
 
-	err := g.compareTemplate(t, name, data, actualData)
+	err := g.compareTemplate(name, data, actualData)
 	if err != nil {
 		{
 			var e *errFixtureNotFound
 			if errors.As(err, &e) {
-				t.Error(err)
-				t.FailNow()
+				g.t.Error(err)
+				g.t.FailNow()
 				return
 			}
 		}
@@ -288,12 +291,12 @@ func (g *goldie) AssertWithTemplate(t *testing.T, name string, data interface{},
 		{
 			var e *errFixtureMismatch
 			if errors.As(err, &e) {
-				t.Error(err)
+				g.t.Error(err)
 				return
 			}
 		}
 
-		t.Error(err)
+		g.t.Error(err)
 	}
 }
 
@@ -302,18 +305,18 @@ func (g *goldie) AssertWithTemplate(t *testing.T, name string, data interface{},
 // This method does not need to be called from code, but it's exposed so that
 // it can be explicitly called if needed. The more common approach would be to
 // update using `go test -update ./...`.
-func (g *goldie) Update(t *testing.T, name string, actualData []byte) error {
-	if err := g.ensureDir(filepath.Dir(g.goldenFileName(t, name))); err != nil {
+func (g *goldie) Update(name string, actualData []byte) error {
+	if err := g.ensureDir(filepath.Dir(g.goldenFileName(name))); err != nil {
 		return err
 	}
 
-	return ioutil.WriteFile(g.goldenFileName(t, name), actualData, g.filePerms)
+	return ioutil.WriteFile(g.goldenFileName(name), actualData, g.filePerms)
 }
 
 // compare is reading the golden fixture file and compare the stored data with
 // the actual data.
-func (g *goldie) compare(t *testing.T, name string, actualData []byte) error {
-	expectedData, err := ioutil.ReadFile(g.goldenFileName(t, name))
+func (g *goldie) compare(name string, actualData []byte) error {
+	expectedData, err := ioutil.ReadFile(g.goldenFileName(name))
 
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -353,8 +356,8 @@ func (g *goldie) compare(t *testing.T, name string, actualData []byte) error {
 
 // compareTemplate is reading the golden fixture file and compare the stored
 // data with the actual data.
-func (g *goldie) compareTemplate(t *testing.T, name string, data interface{}, actualData []byte) error {
-	expectedDataTmpl, err := ioutil.ReadFile(g.goldenFileName(t, name))
+func (g *goldie) compareTemplate(name string, data interface{}, actualData []byte) error {
+	expectedDataTmpl, err := ioutil.ReadFile(g.goldenFileName(name))
 
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -422,16 +425,15 @@ func (g *goldie) ensureDir(loc string) error {
 }
 
 // goldenFileName simply returns the file name of the golden file fixture.
-func (g *goldie) goldenFileName(t *testing.T, name string) string {
-
+func (g *goldie) goldenFileName(name string) string {
 	dir := g.fixtureDir
 
 	if g.useTestNameForDir {
-		dir = filepath.Join(dir, strings.Split(t.Name(), "/")[0])
+		dir = filepath.Join(dir, strings.Split(g.t.Name(), "/")[0])
 	}
 
 	if g.useSubTestNameForDir {
-		n := strings.Split(t.Name(), "/")
+		n := strings.Split(g.t.Name(), "/")
 		if len(n) > 1 {
 
 			dir = filepath.Join(dir, n[1])

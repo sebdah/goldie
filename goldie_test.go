@@ -51,7 +51,7 @@ func TestGoldenFileName(t *testing.T) {
 			WithNameSuffix(test.suffix),
 		)
 
-		filename := g.goldenFileName(t, test.name)
+		filename := g.goldenFileName(test.name)
 		assert.Equal(t, test.expected, filename)
 	}
 }
@@ -128,10 +128,10 @@ func TestUpdate(t *testing.T) {
 	g := New(t)
 
 	for _, test := range tests {
-		err := g.Update(t, test.name, test.data)
+		err := g.Update(test.name, test.data)
 		assert.Equal(t, test.err, err)
 
-		data, err := ioutil.ReadFile(g.goldenFileName(t, test.name))
+		data, err := ioutil.ReadFile(g.goldenFileName(test.name))
 		assert.Nil(t, err)
 		assert.Equal(t, test.data, data)
 
@@ -182,15 +182,15 @@ func TestCompare(t *testing.T) {
 
 	for _, test := range tests {
 		if test.update {
-			err := g.Update(t, test.name, test.expectedData)
+			err := g.Update(test.name, test.expectedData)
 			assert.Nil(t, err)
 		}
 
-		err := g.compare(t, test.name, test.actualData)
+		err := g.compare(test.name, test.actualData)
 		assert.IsType(t, test.err, err)
 
-		g.goldenFileName(t, test.name)
-		err = os.RemoveAll(filepath.Dir(g.goldenFileName(t, test.name)))
+		g.goldenFileName(test.name)
+		err = os.RemoveAll(filepath.Dir(g.goldenFileName(test.name)))
 		assert.Nil(t, err)
 	}
 }
@@ -248,11 +248,11 @@ func TestCompareTemplate(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			if test.update {
-				err := g.Update(t, test.name, test.expectedData)
+				err := g.Update(test.name, test.expectedData)
 				assert.Nil(t, err)
 			}
 
-			err := g.compareTemplate(t, test.name, test.data, test.actualData)
+			err := g.compareTemplate(test.name, test.data, test.actualData)
 			assert.IsType(t, test.err, err)
 
 			err = os.RemoveAll(g.fixtureDir)
@@ -320,50 +320,52 @@ func TestDiffEngines(t *testing.T) {
 }
 
 func TestNewExample(t *testing.T) {
-	tests := []struct {
-		fixtureDir  string // This will get removed from the file system for each test
-		suffix      string
-		subTestName string
-		filePrefix  string
+	tests := map[string]struct {
+		fixtureDir string // This will get removed from the file system for each test
+		suffix     string
+		filePrefix string
 	}{
-		{
-			fixtureDir:  "test-fixtures",
-			suffix:      ".golden.json",
-			subTestName: "subtestname",
-			filePrefix:  "example",
+		"with-custom-fixtureDir-prefix-and-suffix": {
+			fixtureDir: "test-fixtures",
+			suffix:     ".golden.json",
+			filePrefix: "example",
+		},
+		"with-prefix-and-suffix": {
+			suffix:     ".golden.json",
+			filePrefix: "example",
 		},
 	}
 
 	sampleData := []byte("sample data")
 
-	for _, tt := range tests {
-		g := New(t,
-			WithFixtureDir(tt.fixtureDir),
-			WithNameSuffix(tt.suffix),
-			WithTestNameForDir(true),
-			WithSubTestNameForDir(true),
-		)
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			g := New(
+				t,
+				WithFixtureDir(test.fixtureDir),
+				WithNameSuffix(test.suffix),
+				WithTestNameForDir(true),
+				WithSubTestNameForDir(true),
+			)
 
-		t.Run(tt.subTestName, func(t *testing.T) {
-			g.Update(t, tt.filePrefix, sampleData)
-			g.Assert(t, tt.filePrefix, sampleData)
+			g.Update(test.filePrefix, sampleData)
+			g.Assert(test.filePrefix, sampleData)
+
+			fullpath := fmt.Sprintf("%s%s",
+				filepath.Join(
+					test.fixtureDir,
+					"TestNewExample",
+					name,
+					test.filePrefix,
+				),
+				test.suffix,
+			)
+
+			_, err := os.Stat(fullpath)
+			assert.Nil(t, err)
+
+			os.RemoveAll(test.fixtureDir)
+			assert.Nil(t, err)
 		})
-
-		fullpath := fmt.Sprintf("%s%s",
-			filepath.Join(
-				tt.fixtureDir,
-				"TestNewExample",
-				tt.subTestName,
-				tt.filePrefix,
-			),
-			tt.suffix,
-		)
-
-		_, err := os.Stat(fullpath)
-		assert.Nil(t, err)
-
-		os.RemoveAll(tt.fixtureDir)
-		assert.Nil(t, err)
 	}
-
 }

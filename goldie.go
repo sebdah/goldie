@@ -27,19 +27,36 @@ import (
 )
 
 const (
-	// FixtureDir is the folder name for where the fixtures are stored. It's
-	// relative to the "go test" path.
+	// defaultFixtureDir is the folder name for where the fixtures are stored.
+	// It's relative to the "go test" path.
 	defaultFixtureDir = "testdata"
 
-	// FileNameSuffix is the suffix appended to the fixtures. Set to empty
-	// string to disable file name suffixes.
+	// defaultFileNameSuffix is the suffix appended to the fixtures. Set to
+	// empty string to disable file name suffixes.
 	defaultFileNameSuffix = ".golden"
 
-	// FilePerms is used to set the permissions on the golden fixture files.
+	// defaultFilePerms is used to set the permissions on the golden fixture
+	// files.
 	defaultFilePerms os.FileMode = 0644
 
-	// DirPerms is used to set the permissions on the golden fixture folder.
+	// defaultDirPerms is used to set the permissions on the golden fixture
+	// folder.
 	defaultDirPerms os.FileMode = 0755
+
+	// defaultDiffEngine sets which diff engine to use if not defined.
+	defaultDiffEngine = ClassicDiff
+
+	// defaultIgnoreTemplateErrors sets the default value for the
+	// WithIgnoreTemplateErrors option.
+	defaultIgnoreTemplateErrors = false
+
+	// defaultUseTestNameForDir sets the default value for the
+	// WithTestNameForDir option.
+	defaultUseTestNameForDir = false
+
+	// defaultUseSubTestNameForDir sets the default value for the
+	// WithSubTestNameForDir option.
+	defaultUseSubTestNameForDir = false
 )
 
 var (
@@ -68,10 +85,14 @@ type goldie struct {
 // of the options, an error will be reported and t.FailNow() will be called.
 func New(t *testing.T, options ...Option) *goldie {
 	g := goldie{
-		fixtureDir:     defaultFixtureDir,
-		fileNameSuffix: defaultFileNameSuffix,
-		filePerms:      defaultFilePerms,
-		dirPerms:       defaultDirPerms,
+		fixtureDir:           defaultFixtureDir,
+		fileNameSuffix:       defaultFileNameSuffix,
+		filePerms:            defaultFilePerms,
+		dirPerms:             defaultDirPerms,
+		diffEngine:           defaultDiffEngine,
+		ignoreTemplateErrors: defaultIgnoreTemplateErrors,
+		useTestNameForDir:    defaultUseTestNameForDir,
+		useSubTestNameForDir: defaultUseSubTestNameForDir,
 	}
 
 	var err error
@@ -93,6 +114,9 @@ func Diff(engine DiffEngine, actual string, expected string) string {
 	var diff string
 
 	switch engine {
+	case Simple:
+		diff = fmt.Sprintf("Expected: %s\nGot: %s", expected, actual)
+
 	case ClassicDiff:
 		diff, _ = difflib.GetUnifiedDiffString(difflib.UnifiedDiff{
 			A:        difflib.SplitLines(expected),
@@ -175,6 +199,8 @@ func (g *goldie) WithIgnoreTemplateErrors(ignoreErrors bool) error {
 
 // WithTestNameForDir will create a directory with the test's name in the
 // fixture directory to store all the golden files.
+//
+// Default value is false.
 func (g *goldie) WithTestNameForDir(use bool) error {
 	g.useTestNameForDir = use
 	return nil
@@ -183,6 +209,8 @@ func (g *goldie) WithTestNameForDir(use bool) error {
 // WithSubTestNameForDir will create a directory with the sub test's name to
 // store all the golden files. If WithTestNameForDir is enabled, it will be in
 // the test name's directory. Otherwise, it will be in the fixture directory.
+//
+// Default value is false.
 func (g *goldie) WithSubTestNameForDir(use bool) error {
 	g.useSubTestNameForDir = use
 	return nil
@@ -324,25 +352,14 @@ func (g *goldie) compare(t *testing.T, name string, actualData []byte) error {
 	}
 
 	if !bytes.Equal(actualData, expectedData) {
-		msg := "Result did not match the golden fixture.\n"
+		msg := "Result did not match the golden fixture. Diff is below:\n\n"
 		actual := string(actualData)
 		expected := string(expectedData)
 
-		if g.diffFn != nil || g.diffEngine != UndefinedDiff {
-			var d string
-			if g.diffFn != nil {
-				d = g.diffFn(actual, expected)
-			} else {
-				d = Diff(g.diffEngine, actual, expected)
-			}
-
-			msg += "Diff is below:\n" + d
+		if g.diffFn != nil {
+			msg += g.diffFn(actual, expected)
 		} else {
-			msg = fmt.Sprintf("%sExpected: %s\n"+
-				"Got: %s",
-				msg,
-				expected,
-				actual)
+			msg += Diff(g.diffEngine, actual, expected)
 		}
 
 		return newErrFixtureMismatch(msg)
@@ -380,25 +397,14 @@ func (g *goldie) compareTemplate(t *testing.T, name string, data interface{}, ac
 	}
 
 	if !bytes.Equal(actualData, expectedData.Bytes()) {
-		msg := "Result did not match the golden fixture.\n"
+		msg := "Result did not match the golden fixture. Diff is below:\n\n"
 		actual := string(actualData)
 		expected := expectedData.String()
 
-		if g.diffFn != nil || g.diffEngine != UndefinedDiff {
-			var d string
-			if g.diffFn != nil {
-				d = g.diffFn(actual, expected)
-			} else {
-				d = Diff(g.diffEngine, actual, expected)
-			}
-
-			msg += "Diff is below:\n" + d
+		if g.diffFn != nil {
+			msg += g.diffFn(actual, expected)
 		} else {
-			msg = fmt.Sprintf("%sExpected: %s\n"+
-				"Got: %s",
-				msg,
-				expected,
-				actual)
+			msg += Diff(g.diffEngine, actual, expected)
 		}
 
 		return newErrFixtureMismatch(msg)

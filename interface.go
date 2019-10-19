@@ -30,7 +30,7 @@ type DiffFn func(actual string, expected string) string
 type DiffEngine int
 
 const (
-	// UndefinedDiff represents any undefined diff processor.  If a new diff
+	// UndefinedDiff represents any undefined diff processor. If a new diff
 	// engine is implemented, it should be added to this enumeration and to the
 	// `diff` helper function.
 	UndefinedDiff DiffEngine = iota
@@ -47,6 +47,13 @@ const (
 	// ColoredDiff produces a diff that will use red and green colors to
 	// distinguish the diffs between the two values.
 	ColoredDiff
+
+	// Simple is a very plain way of printing the byte comparison. It will look
+	// like this:
+	//
+	// Expected: <data>
+	// Got: <data>
+	Simple
 )
 
 // OptionProcessor defines the functions that can be called to set values for
@@ -107,6 +114,8 @@ func WithDirPerms(mode os.FileMode) Option {
 
 // WithDiffEngine sets the `diff` engine that will be used to generate the
 // `diff` text.
+//
+// Default: ClassicDiff
 func WithDiffEngine(engine DiffEngine) Option {
 	return func(o OptionProcessor) error {
 		return o.WithDiffEngine(engine)
@@ -134,6 +143,8 @@ func WithIgnoreTemplateErrors(ignoreErrors bool) Option {
 
 // WithTestNameForDir will create a directory with the test's name in the
 // fixture directory to store all the golden files.
+//
+// Default value is false.
 func WithTestNameForDir(use bool) Option {
 	return func(o OptionProcessor) error {
 		return o.WithTestNameForDir(use)
@@ -143,6 +154,8 @@ func WithTestNameForDir(use bool) Option {
 // WithSubTestNameForDir will create a directory with the sub test's name to
 // store all the golden files. If WithTestNameForDir is enabled, it will be in
 // the test name's directory. Otherwise, it will be in the fixture directory.
+//
+// Default value is false.
 func WithSubTestNameForDir(use bool) Option {
 	return func(o OptionProcessor) error {
 		return o.WithSubTestNameForDir(use)

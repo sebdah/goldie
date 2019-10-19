@@ -16,7 +16,9 @@ Updating the golden file can be done by running `go test -update ./...`.
 See the [GoDoc](https://godoc.org/github.com/sebdah/goldie) for API reference
 and configuration options.
 
-## Example usage
+# Example usage
+
+## Basic assertions
 
 The below example fetches data from a REST API. The last line in the test is the
 actual usage of `goldie`. It takes the HTTP response body and asserts that it's
@@ -37,10 +39,10 @@ func TestExample(t *testing.T) {
 }
 ```
 
-## Using template golden file
+## Assertions using templates
 
-If some values in the golden file can change depending on the test, you can use golang
-template in the golden file and pass the data to `AssertWithTemplate`.
+If some values in the golden file can change depending on the test, you can use
+golang template in the golden file and pass the data to `AssertWithTemplate`.
 
 ### example.golden
 ```
@@ -79,6 +81,7 @@ drop the `-update` flag.
 `go test ./...`
 
 ## Options
+
 `goldie` supports a number of configuration options that will alter the behavior
 of the library.  These options should be passed into the `goldie.New()` method.
 
@@ -94,7 +97,57 @@ func TestNewExample(t *testing.T) {
 
     g.Assert(t, "example", []byte("my example data"))
 }
+```
 
+### Available options
+
+| Option                     | Comment                                                  | Default
+|----------------------------|----------------------------------------------------------|-------------
+| `WithFixtureDir`           | Set fixture dir name                                     | `testdata`
+| `WithNameSuffix`           | Suffix for fixture files.                                | `.golden`
+| `WithDirPerms`             | Directory permissions for fixtures                       | `0755`
+| `WithFilePerms`            | File permissions for fixtures                            | `0644`
+| `WithDiffEngine`           | Diff engine to use for diff output                       | `ClassicDiff`
+| `WithDiffFn`               | Custom diff logic to be used                             | None
+| `WithIgnoreTemplateErrors` | Ignore errors from templates                             | `false`
+| `WithTestNameForDir`       | Create a folder with the tests name for the fixtures     | `false`
+| `WithSubTestNameForDir`    | Create a folder with the sub tests name for the fixtures | `false`
+
+### Diff output
+
+Goldie has three output modes; classic diff (default), colored diffs and simple
+mode.
+
+You can select your preferred output using the `WithDiffEngine` option:
+
+```
+g.New(
+    t,
+    goldie.WithDiffEngine(goldie.ColoredDiff), // Simple, ColoredDiff, ClassicDiff
+)
+```
+
+## Goldie v2
+
+With the release of Goldie v2.0.0 we are introducing features that will break
+backwards compatibility with older versions of the test helper. A few things
+have changed:
+
+### New default fixture directory
+
+There is a new default directory for fixtures, `testdata`. This directory is a
+better default as it is more widely used in the Go community (including the
+standard library). See issue [#10](https://github.com/sebdah/goldie/issues/10)
+for details.
+
+### New way to initialize Goldie
+
+With the introduction of the functional options we also introduced `goldie.New`,
+which is initializing Goldie. `Assert*` and other methods are now accessed like:
+
+```
+g := goldie.New(t)
+g.Assert(t, ...)
 ```
 
 ## FAQ

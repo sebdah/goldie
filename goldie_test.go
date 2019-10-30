@@ -51,7 +51,7 @@ func TestGoldenFileName(t *testing.T) {
 			WithNameSuffix(test.suffix),
 		)
 
-		filename := g.goldenFileName(t, test.name)
+		filename := g.GoldenFileName(t, test.name)
 		assert.Equal(t, test.expected, filename)
 	}
 }
@@ -131,7 +131,7 @@ func TestUpdate(t *testing.T) {
 		err := g.Update(t, test.name, test.data)
 		assert.Equal(t, test.err, err)
 
-		data, err := ioutil.ReadFile(g.goldenFileName(t, test.name))
+		data, err := ioutil.ReadFile(g.GoldenFileName(t, test.name))
 		assert.Nil(t, err)
 		assert.Equal(t, test.data, data)
 
@@ -189,8 +189,8 @@ func TestCompare(t *testing.T) {
 		err := g.compare(t, test.name, test.actualData)
 		assert.IsType(t, test.err, err)
 
-		g.goldenFileName(t, test.name)
-		err = os.RemoveAll(filepath.Dir(g.goldenFileName(t, test.name)))
+		g.GoldenFileName(t, test.name)
+		err = os.RemoveAll(filepath.Dir(g.GoldenFileName(t, test.name)))
 		assert.Nil(t, err)
 	}
 }

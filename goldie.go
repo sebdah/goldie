@@ -224,6 +224,7 @@ func (g *goldie) WithSubTestNameForDir(use bool) error {
 // within the package. Also it should be a valid file name (so keeping to
 // `a-z0-9\-\_` is a good idea).
 func (g *goldie) Assert(t *testing.T, name string, actualData []byte) {
+	t.Helper()
 	if *update {
 		err := g.Update(t, name, actualData)
 		if err != nil {
@@ -263,6 +264,7 @@ func (g *goldie) Assert(t *testing.T, name string, actualData []byte) {
 // within the package. Also it should be a valid file name (so keeping to
 // `a-z0-9\-\_` is a good idea).
 func (g *goldie) AssertJson(t *testing.T, name string, actualJsonData interface{}) {
+	t.Helper()
 	js, err := json.MarshalIndent(actualJsonData, "", "  ")
 
 	if err != nil {
@@ -294,6 +296,7 @@ func normalizeLF(d []byte) []byte {
 // Also it should be a valid file name (so keeping to `a-z0-9\-\_` is a good
 // idea).
 func (g *goldie) AssertWithTemplate(t *testing.T, name string, data interface{}, actualData []byte) {
+	t.Helper()
 	if *update {
 		err := g.Update(t, name, actualData)
 		if err != nil {

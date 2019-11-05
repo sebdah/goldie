@@ -334,17 +334,17 @@ func (g *goldie) AssertWithTemplate(t *testing.T, name string, data interface{},
 // it can be explicitly called if needed. The more common approach would be to
 // update using `go test -update ./...`.
 func (g *goldie) Update(t *testing.T, name string, actualData []byte) error {
-	if err := g.ensureDir(filepath.Dir(g.goldenFileName(t, name))); err != nil {
+	if err := g.ensureDir(filepath.Dir(g.GoldenFileName(t, name))); err != nil {
 		return err
 	}
 
-	return ioutil.WriteFile(g.goldenFileName(t, name), actualData, g.filePerms)
+	return ioutil.WriteFile(g.GoldenFileName(t, name), actualData, g.filePerms)
 }
 
 // compare is reading the golden fixture file and compare the stored data with
 // the actual data.
 func (g *goldie) compare(t *testing.T, name string, actualData []byte) error {
-	expectedData, err := ioutil.ReadFile(g.goldenFileName(t, name))
+	expectedData, err := ioutil.ReadFile(g.GoldenFileName(t, name))
 
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -374,7 +374,7 @@ func (g *goldie) compare(t *testing.T, name string, actualData []byte) error {
 // compareTemplate is reading the golden fixture file and compare the stored
 // data with the actual data.
 func (g *goldie) compareTemplate(t *testing.T, name string, data interface{}, actualData []byte) error {
-	expectedDataTmpl, err := ioutil.ReadFile(g.goldenFileName(t, name))
+	expectedDataTmpl, err := ioutil.ReadFile(g.GoldenFileName(t, name))
 
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -430,8 +430,8 @@ func (g *goldie) ensureDir(loc string) error {
 	return err
 }
 
-// goldenFileName simply returns the file name of the golden file fixture.
-func (g *goldie) goldenFileName(t *testing.T, name string) string {
+// GoldenFileName simply returns the file name of the golden file fixture.
+func (g *goldie) GoldenFileName(t *testing.T, name string) string {
 
 	dir := g.fixtureDir
 

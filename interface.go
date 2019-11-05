@@ -19,6 +19,7 @@ type Tester interface {
 	AssertJson(t *testing.T, name string, actualJsonData interface{})
 	AssertWithTemplate(t *testing.T, name string, data interface{}, actualData []byte)
 	Update(t *testing.T, name string, actualData []byte) error
+	GoldenFileName(t *testing.T, name string) string
 }
 
 // DiffFn takes in an actual and expected and will return a diff string

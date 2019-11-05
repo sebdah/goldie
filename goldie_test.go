@@ -345,7 +345,7 @@ func TestNewExample(t *testing.T) {
 		)
 
 		t.Run(tt.subTestName, func(t *testing.T) {
-			g.Update(t, tt.filePrefix, sampleData)
+			require.NoError(t, g.Update(t, tt.filePrefix, sampleData))
 			g.Assert(t, tt.filePrefix, sampleData)
 		})
 

@@ -67,11 +67,13 @@ var (
 	update = flag.Bool("update", false, "Update golden test file fixture")
 
 	// clean determines if we should remove old golden test files in the output
-	// directory or not. This only takes effect if we are updating the golden test files.
+	// directory or not. This only takes effect if we are updating the golden
+	// test files.
 	clean = flag.Bool("clean", false, "Clean old golden test files before writing new olds")
 
-	// ts saves the timestamp of the test run, we use ts to mark the modification time of golden file
-	// dirs, for cleaning if required by `-clean` flag.
+	// ts saves the timestamp of the test run, we use ts to mark the
+	// modification time of golden file dirs, for cleaning if required by
+	// `-clean` flag.
 	ts = time.Now()
 )
 
@@ -438,15 +440,18 @@ func (g *goldie) compareTemplate(t *testing.T, name string, data interface{}, ac
 // ensureDir will create the fixture folder if it does not already exist.
 func (g *goldie) ensureDir(loc string) error {
 	s, err := os.Stat(loc)
+
 	switch {
 	case err != nil && os.IsNotExist(err):
 		// the location does not exist, so make directories to there
 		return os.MkdirAll(loc, g.dirPerms)
+
 	case err == nil && s.IsDir() && *clean && s.ModTime().UnixNano() != ts.UnixNano():
 		if err := os.RemoveAll(loc); err != nil {
 			return err
 		}
 		return os.MkdirAll(loc, g.dirPerms)
+
 	case err == nil && !s.IsDir():
 		return newErrFixtureDirectoryIsFile(loc)
 	}

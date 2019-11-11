@@ -80,6 +80,15 @@ drop the `-update` flag.
 
 `go test ./...`
 
+## Flags
+
+### Clean output directory
+
+Using `-update` along with `-clean` flag will clear the fixture directory before updating golden files.
+
+`go test -update -clean ./...`
+
+
 ## Options
 
 `goldie` supports a number of configuration options that will alter the behavior

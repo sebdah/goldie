@@ -19,6 +19,7 @@ import (
 	"strings"
 	"testing"
 	"text/template"
+	"time"
 
 	"errors"
 
@@ -64,6 +65,14 @@ var (
 	// golden files or not. This should be true when you need to update the
 	// data, but false when actually running the tests.
 	update = flag.Bool("update", false, "Update golden test file fixture")
+
+	// clean determines if we should remove old golden test files in the output
+	// directory or not. This only takes effect if we are updating the golden test files.
+	clean = flag.Bool("clean", false, "Clean old golden test files before writing new olds")
+
+	// ts saves the timestamp of the test run, we use ts to mark the modification time of golden file
+	// dirs, for cleaning if required by `-clean` flag.
+	ts = time.Now()
 )
 
 type goldie struct {
@@ -334,11 +343,21 @@ func (g *goldie) AssertWithTemplate(t *testing.T, name string, data interface{},
 // it can be explicitly called if needed. The more common approach would be to
 // update using `go test -update ./...`.
 func (g *goldie) Update(t *testing.T, name string, actualData []byte) error {
-	if err := g.ensureDir(filepath.Dir(g.GoldenFileName(t, name))); err != nil {
+	goldenFile := g.GoldenFileName(t, name)
+	goldenFileDir := filepath.Dir(goldenFile)
+	if err := g.ensureDir(goldenFileDir); err != nil {
 		return err
 	}
 
-	return ioutil.WriteFile(g.GoldenFileName(t, name), actualData, g.filePerms)
+	if err := ioutil.WriteFile(goldenFile, actualData, g.filePerms); err != nil {
+		return err
+	}
+
+	if err := os.Chtimes(goldenFileDir, ts, ts); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // compare is reading the golden fixture file and compare the stored data with
@@ -423,6 +442,11 @@ func (g *goldie) ensureDir(loc string) error {
 	case err != nil && os.IsNotExist(err):
 		// the location does not exist, so make directories to there
 		return os.MkdirAll(loc, g.dirPerms)
+	case err == nil && s.IsDir() && *clean && s.ModTime().UnixNano() != ts.UnixNano():
+		if err := os.RemoveAll(loc); err != nil {
+			return err
+		}
+		return os.MkdirAll(loc, g.dirPerms)
 	case err == nil && !s.IsDir():
 		return newErrFixtureDirectoryIsFile(loc)
 	}
@@ -442,7 +466,6 @@ func (g *goldie) GoldenFileName(t *testing.T, name string) string {
 	if g.useSubTestNameForDir {
 		n := strings.Split(t.Name(), "/")
 		if len(n) > 1 {
-
 			dir = filepath.Join(dir, n[1])
 		}
 	}

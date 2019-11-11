@@ -2,14 +2,14 @@ package goldie
 
 import (
 	"fmt"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"reflect"
 	"testing"
-
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
+	"time"
 )
 
 func TestGoldenFileName(t *testing.T) {
@@ -319,51 +319,96 @@ func TestDiffEngines(t *testing.T) {
 
 }
 
-func TestNewExample(t *testing.T) {
-	tests := []struct {
-		fixtureDir  string // This will get removed from the file system for each test
-		suffix      string
-		subTestName string
-		filePrefix  string
-	}{
-		{
-			fixtureDir:  "test-fixtures",
-			suffix:      ".golden.json",
-			subTestName: "subtestname",
-			filePrefix:  "example",
-		},
-	}
+func TestCleanFunction(t *testing.T) {
+	savedCleanState := *clean
+	*clean = false
+	savedUpdateState := *update
+	*update = true
+	ts = time.Now()
 
 	sampleData := []byte("sample data")
+	fixtureDir := "test-fixtures"
+	fixtureSubDirA := fixtureDir + "/a"
+	fixtureSubDirB := fixtureDir + "/b"
+	suffix := ".golden"
 
-	for _, tt := range tests {
+	// The first time running go test, with -update, without -clean
+	firstTests := []struct {
+		fixtureDirWithSub string
+		filePrefix        string
+	}{
+		{fixtureDirWithSub: fixtureSubDirA, filePrefix: "example-a1"},
+		{fixtureDirWithSub: fixtureSubDirA, filePrefix: "example-a2"},
+		{fixtureDirWithSub: fixtureSubDirB, filePrefix: "example-b1",},
+		{fixtureDirWithSub: fixtureSubDirB, filePrefix: "example-b2"},
+	}
+
+	for i, tt := range firstTests {
 		g := New(t,
-			WithFixtureDir(tt.fixtureDir),
-			WithNameSuffix(tt.suffix),
-			WithTestNameForDir(true),
-			WithSubTestNameForDir(true),
+			WithFixtureDir(tt.fixtureDirWithSub),
+			WithNameSuffix(suffix),
 		)
 
-		t.Run(tt.subTestName, func(t *testing.T) {
-			require.NoError(t, g.Update(t, tt.filePrefix, sampleData))
+		t.Run(fmt.Sprint(i), func(t *testing.T) {
 			g.Assert(t, tt.filePrefix, sampleData)
 		})
 
-		fullpath := fmt.Sprintf("%s%s",
-			filepath.Join(
-				tt.fixtureDir,
-				"TestNewExample",
-				tt.subTestName,
-				tt.filePrefix,
-			),
-			tt.suffix,
+		fullPath := fmt.Sprintf("%s%s",
+			filepath.Join(tt.fixtureDirWithSub, tt.filePrefix),
+			suffix,
 		)
 
-		_, err := os.Stat(fullpath)
-		assert.Nil(t, err)
-
-		os.RemoveAll(tt.fixtureDir)
+		_, err := os.Stat(fullPath)
 		assert.Nil(t, err)
 	}
 
+	*clean = true
+	ts = time.Now()
+
+	// The second time running go test, with -update and -clean
+	secondTests := []struct {
+		fixtureDirWithSub string
+		filePrefix        string
+	}{
+		{fixtureDirWithSub: fixtureSubDirA, filePrefix: "example-a3"},
+		{fixtureDirWithSub: fixtureSubDirA, filePrefix: "example-a4"},
+		{fixtureDirWithSub: fixtureSubDirB, filePrefix: "example-b3",},
+		{fixtureDirWithSub: fixtureSubDirB, filePrefix: "example-b4"},
+	}
+
+	for i, tt := range secondTests {
+		g := New(t,
+			WithFixtureDir(tt.fixtureDirWithSub),
+			WithNameSuffix(suffix),
+		)
+
+		t.Run(fmt.Sprint(i), func(t *testing.T) {
+			g.Assert(t, tt.filePrefix, sampleData)
+		})
+
+		fullPath := fmt.Sprintf("%s%s",
+			filepath.Join(tt.fixtureDirWithSub, tt.filePrefix),
+			suffix,
+		)
+
+		_, err := os.Stat(fullPath)
+		assert.Nil(t, err)
+	}
+
+	// make sure output files of the first run doesnt exist
+	for _, tt := range firstTests {
+		fullPath := fmt.Sprintf("%s%s",
+			filepath.Join(tt.fixtureDirWithSub, tt.filePrefix),
+			suffix,
+		)
+
+		_, err := os.Stat(fullPath)
+		assert.Error(t, err)
+		assert.True(t, os.IsNotExist(err))
+	}
+
+	err := os.RemoveAll(fixtureDir)
+	assert.Nil(t, err)
+	*clean = savedCleanState
+	*update = savedUpdateState
 }

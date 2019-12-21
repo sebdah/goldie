@@ -18,7 +18,7 @@ and configuration options.
 
 # Installation
 
-Install the latest version, v2 with:
+Install the latest version, v2, with:
 
 ```shell
 go get github.com/sebdah/goldie/v2

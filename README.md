@@ -21,13 +21,13 @@ and configuration options.
 Install the latest version, v2, with:
 
 ```shell
-go get github.com/sebdah/goldie/v2
+go get -u github.com/sebdah/goldie/v2
 ```
 
 For the older v1 release, please use:
 
 ```shell
-go get github.com/sebdah/goldie
+go get -u github.com/sebdah/goldie
 ```
 
 # Example usage

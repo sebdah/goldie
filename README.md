@@ -16,6 +16,20 @@ Updating the golden file can be done by running `go test -update ./...`.
 See the [GoDoc](https://godoc.org/github.com/sebdah/goldie) for API reference
 and configuration options.
 
+# Installation
+
+Install the latest version, v2 with:
+
+```shell
+go get github.com/sebdah/goldie/v2
+```
+
+For the older v1 release, please use:
+
+```shell
+go get github.com/sebdah/goldie
+```
+
 # Example usage
 
 ## Basic assertions

@@ -94,16 +94,22 @@ drop the `-update` flag.
 
 `go test ./...`
 
-## Flags
+## Validating JSON and XML output
 
-### Clean output directory
+If you are asserting JSON and XML data, you can use the handy `AssertJson` and
+`AssertXml` functions that will nicely indent the golden validation files for
+better readability.
+
+# Flags
+
+## Clean output directory
 
 Using `-update` along with `-clean` flag will clear the fixture directory before updating golden files.
 
 `go test -update -clean ./...`
 
 
-## Options
+# Options
 
 `goldie` supports a number of configuration options that will alter the behavior
 of the library.  These options should be passed into the `goldie.New()` method.
@@ -122,7 +128,7 @@ func TestNewExample(t *testing.T) {
 }
 ```
 
-### Available options
+## Available options
 
 | Option                     | Comment                                                  | Default
 |----------------------------|----------------------------------------------------------|-------------
@@ -136,7 +142,7 @@ func TestNewExample(t *testing.T) {
 | `WithTestNameForDir`       | Create a folder with the tests name for the fixtures     | `false`
 | `WithSubTestNameForDir`    | Create a folder with the sub tests name for the fixtures | `false`
 
-### Diff output
+## Diff output
 
 Goldie has three output modes; classic diff (default), colored diffs and simple
 mode.
@@ -150,20 +156,20 @@ g.New(
 )
 ```
 
-## Goldie v2
+# Goldie v2
 
 With the release of Goldie v2.0.0 we are introducing features that will break
 backwards compatibility with older versions of the test helper. A few things
 have changed:
 
-### New default fixture directory
+## New default fixture directory
 
 There is a new default directory for fixtures, `testdata`. This directory is a
 better default as it is more widely used in the Go community (including the
 standard library). See issue [#10](https://github.com/sebdah/goldie/issues/10)
 for details.
 
-### New way to initialize Goldie
+## New way to initialize Goldie
 
 With the introduction of the functional options we also introduced `goldie.New`,
 which is initializing Goldie. `Assert*` and other methods are now accessed like:
@@ -173,15 +179,15 @@ g := goldie.New(t)
 g.Assert(t, ...)
 ```
 
-## FAQ
+# FAQ
 
-### Do you need any help in the project?
+## Do you need any help in the project?
 
 Yes, please! Pull requests are most welcome. On the wish list:
 
 - Unit tests.
 
-### Why the name `goldie`?
+## Why the name `goldie`?
 
 The name comes from the fact that it's for Go and handles golden file testing.
 But yes, it may not be the best name in the world.
@@ -192,7 +198,7 @@ This is based on the great [Advanced Go
 testing](https://www.youtube.com/watch?v=yszygk1cpEc) talk by
 [@mitchellh](https://twitter.com/mitchellh).
 
-## License
+# License
 
 MIT
 

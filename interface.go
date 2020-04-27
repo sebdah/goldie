@@ -17,6 +17,7 @@ type Option func(OptionProcessor) error
 type Tester interface {
 	Assert(t *testing.T, name string, actualData []byte)
 	AssertJson(t *testing.T, name string, actualJsonData interface{})
+	AssertXml(t *testing.T, name string, actualXmlData interface{})
 	AssertWithTemplate(t *testing.T, name string, data interface{}, actualData []byte)
 	Update(t *testing.T, name string, actualData []byte) error
 	GoldenFileName(t *testing.T, name string) string

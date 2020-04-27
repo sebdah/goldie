@@ -11,6 +11,7 @@ package goldie
 import (
 	"bytes"
 	"encoding/json"
+	"encoding/xml"
 	"flag"
 	"fmt"
 	"io/ioutil"
@@ -284,6 +285,25 @@ func (g *goldie) AssertJson(t *testing.T, name string, actualJsonData interface{
 	}
 
 	g.Assert(t, name, normalizeLF(js))
+}
+
+// AssertXml compares the actual xml data received with expected data in the
+// golden files. If the update flag is set, it will also update the golden
+// file.
+//
+// `name` refers to the name of the test and it should typically be unique
+// within the package. Also it should be a valid file name (so keeping to
+// `a-z0-9\-\_` is a good idea).
+func (g *goldie) AssertXml(t *testing.T, name string, actualXmlData interface{}) {
+	t.Helper()
+	x, err := xml.MarshalIndent(actualXmlData, "", "  ")
+
+	if err != nil {
+		t.Error(err)
+		t.FailNow()
+	}
+
+	g.Assert(t, name, normalizeLF(x))
 }
 
 // normalizeLF normalizes line feed character set across os (es)

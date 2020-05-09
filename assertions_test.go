@@ -1,10 +1,11 @@
 package goldie
 
 import (
-	"github.com/stretchr/testify/assert"
 	"os"
 	"path/filepath"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestCompare(t *testing.T) {
@@ -124,6 +125,25 @@ func TestCompareTemplate(t *testing.T) {
 
 			err = os.RemoveAll(g.fixtureDir)
 			assert.Nil(t, err)
+		})
+	}
+}
+
+func TestNormalizeLF(t *testing.T) {
+	tests := map[string]struct {
+		input     []byte
+		expectedD []byte
+	}{
+		"windows style": {[]byte("Hello\r\nWorld"), []byte("Hello\nWorld")},
+		"mac style":     {[]byte("Hello\rWorld"), []byte("Hello\nWorld")},
+		"unix style":    {[]byte("Hello\nWorld"), []byte("Hello\nWorld")},
+		"empty slice":   {[]byte(""), []byte{}},
+		"nil input":     {nil, nil},
+	}
+
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			assert.Equal(t, test.expectedD, normalizeLF(test.input))
 		})
 	}
 }

@@ -2,162 +2,155 @@ package goldie
 
 import (
 	"fmt"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	"reflect"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestGoldenFileName(t *testing.T) {
-	tests := []struct {
-		dir      string
+	tests := map[string]struct {
 		name     string
-		suffix   string
+		options  []Option
 		expected string
 	}{
-		{
-			dir:      "fixtures",
-			name:     "example-name",
-			suffix:   ".suffix",
-			expected: "fixtures/example-name.suffix",
+		"using defaults": {
+			name:     "example",
+			expected: fmt.Sprintf("%s/%s%s", defaultFixtureDir, "example", defaultFileNameSuffix),
 		},
-		{
-			dir:      "",
-			name:     "example-name",
-			suffix:   ".suffix",
-			expected: "example-name.suffix",
+		"with custom suffix": {
+			name: "example",
+			options: []Option{
+				WithNameSuffix(".txt"),
+			},
+			expected: fmt.Sprintf("%s/%s%s", defaultFixtureDir, "example", ".txt"),
 		},
-		{
-			dir:      "fixtures",
-			name:     "",
-			suffix:   ".suffix",
-			expected: "fixtures/.suffix",
+		"with custom fixture dir": {
+			name: "example",
+			options: []Option{
+				WithFixtureDir("fixtures"),
+			},
+			expected: fmt.Sprintf("%s/%s%s", "fixtures", "example", defaultFileNameSuffix),
 		},
-		{
-			dir:      "fixtures",
-			name:     "example-name",
-			suffix:   "",
-			expected: "fixtures/example-name",
+		"using test name for dir": {
+			name: "example",
+			options: []Option{
+				WithTestNameForDir(true),
+			},
+			expected: fmt.Sprintf("%s/%s/%s%s", defaultFixtureDir, t.Name(), "example", defaultFileNameSuffix),
+		},
+		"using sub test name for dir": {
+			name: "example",
+			options: []Option{
+				WithSubTestNameForDir(true),
+			},
+			expected: fmt.Sprintf("%s/%s/%s%s", defaultFixtureDir, "using_sub_test_name_for_dir", "example", defaultFileNameSuffix),
 		},
 	}
 
-	for _, test := range tests {
-		g := New(t,
-			WithFixtureDir(test.dir),
-			WithNameSuffix(test.suffix),
-		)
-
-		filename := g.GoldenFileName(t, test.name)
-		assert.Equal(t, test.expected, filename)
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			g := New(t, test.options...)
+			assert.Equal(t, test.expected, g.GoldenFileName(t, test.name))
+		})
 	}
 }
 
 func TestEnsureDir(t *testing.T) {
-	tests := []struct {
+	tests := map[string]struct {
 		dir         string
 		shouldExist bool
 		fileExist   bool
 		err         interface{}
 	}{
-		{
+		"with existing directory": {
 			dir:         "example1",
 			shouldExist: true,
 			err:         nil,
 		},
-		{
+		"without existing directory": {
 			dir:         "example2",
 			shouldExist: false,
+			fileExist:   false,
 			err:         nil,
 		},
-		{
+		"with existing deep directory structure": {
 			dir:         "now/still/works",
 			shouldExist: true,
 			err:         nil,
 		},
-		{
+		"error, fixture directory is a file": {
 			dir:         "this/will/not",
 			shouldExist: false,
 			fileExist:   true,
-			err:         newErrFixtureDirectoryIsFile(""),
+			err:         newErrFixtureDirectoryIsFile(filepath.Join(os.TempDir(), "this/will/not")),
 		},
 	}
 
-	g := New(t)
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			g := New(t)
+			target := filepath.Join(os.TempDir(), test.dir)
 
-	for _, test := range tests {
-		target := filepath.Join(os.TempDir(), test.dir)
+			if test.shouldExist {
+				err := os.MkdirAll(target, g.dirPerms)
+				assert.Nil(t, err)
+			}
 
-		if test.shouldExist {
-			err := os.MkdirAll(target, 0755)
+			if test.fileExist {
+				err := os.MkdirAll(filepath.Dir(target), g.dirPerms)
+				assert.Nil(t, err)
+
+				f, err := os.Create(target)
+				require.NoError(t, err)
+				err = f.Close()
+				assert.Nil(t, err)
+			}
+
+			err := g.ensureDir(target)
+			assert.Equal(t, test.err, err)
+			if err != nil {
+				return
+			}
+
+			s, err := os.Stat(target)
 			assert.Nil(t, err)
-		}
-
-		if test.fileExist {
-			err := os.MkdirAll(filepath.Dir(target), 0755)
-			assert.Nil(t, err)
-
-			f, err := os.Create(target)
-			require.NoError(t, err)
-			err = f.Close()
-			assert.Nil(t, err)
-		}
-
-		err := g.ensureDir(target)
-		assert.IsType(t, test.err, err)
+			assert.True(t, s.IsDir())
+		})
 	}
 }
 
 // TODO: This test could use a little <3. It should test some more negative
 // cases.
 func TestUpdate(t *testing.T) {
-	tests := []struct {
+	tests := map[string]struct {
 		name string
 		data []byte
 		err  error
 	}{
-		{
+		"successful update": {
 			name: "abc",
 			data: []byte("some example data"),
 			err:  nil,
 		},
 	}
 
-	g := New(t)
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			g := New(t)
+			err := g.Update(t, test.name, test.data)
+			assert.Equal(t, test.err, err)
 
-	for _, test := range tests {
-		err := g.Update(t, test.name, test.data)
-		assert.Equal(t, test.err, err)
+			data, err := ioutil.ReadFile(g.GoldenFileName(t, test.name))
+			assert.Nil(t, err)
+			assert.Equal(t, test.data, data)
 
-		data, err := ioutil.ReadFile(g.GoldenFileName(t, test.name))
-		assert.Nil(t, err)
-		assert.Equal(t, test.data, data)
-
-		err = os.RemoveAll(g.fixtureDir)
-		assert.Nil(t, err)
-	}
-}
-
-func TestNormalizeLF(t *testing.T) {
-	tests := []struct {
-		name         string
-		inputData    []byte
-		expectedData []byte
-	}{
-		{"windows-style", []byte("Hello\r\nWorld"), []byte("Hello\nWorld")},
-		{"mac-style", []byte("Hello\rWorld"), []byte("Hello\nWorld")},
-		{"unix-style", []byte("Hello\nWorld"), []byte("Hello\nWorld")},
-		{"empty-slice", []byte(""), []byte{}},
-		{"nil-input", nil, nil},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if actualData := normalizeLF(tt.inputData); !reflect.DeepEqual(actualData, tt.expectedData) {
-				t.Errorf("normalizeLF() = %v, want %v", actualData, tt.expectedData)
-			}
+			err = os.RemoveAll(g.fixtureDir)
+			assert.Nil(t, err)
 		})
 	}
 }
@@ -168,33 +161,49 @@ func TestDiffEngines(t *testing.T) {
 		diff   string
 	}
 
-	tests := []struct {
-		name     string
+	tests := map[string]struct {
 		actual   string
 		expected string
-		engines  []engine
+		engine   engine
 	}{
-		{
-			name:     "lorem",
+		"simple": {
 			actual:   "Lorem ipsum dolor.",
 			expected: "Lorem dolor sit amet.",
-			engines: []engine{
-				{engine: ClassicDiff, diff: `--- Expected
+			engine: engine{
+				engine: Simple,
+				diff: `Expected: Lorem dolor sit amet.
+Got: Lorem ipsum dolor.`},
+		},
+		"classic": {
+			actual:   "Lorem ipsum dolor.",
+			expected: "Lorem dolor sit amet.",
+			engine: engine{
+				engine: ClassicDiff,
+				diff: `--- Expected
 +++ Actual
 @@ -1 +1 @@
 -Lorem dolor sit amet.
 +Lorem ipsum dolor.
 `},
-				{engine: ColoredDiff, diff: "Lorem \x1b[31mipsum \x1b[0mdolor\x1b[32m sit amet\x1b[0m."},
+		},
+		"colored": {
+			actual:   "Lorem ipsum dolor.",
+			expected: "Lorem dolor sit amet.",
+			engine: engine{
+				engine: ColoredDiff,
+				diff:   "Lorem \x1b[31mipsum \x1b[0mdolor\x1b[32m sit amet\x1b[0m.",
 			},
 		},
 	}
 
-	for _, tt := range tests {
-		for _, e := range tt.engines {
-			diff := Diff(e.engine, tt.actual, tt.expected)
-			assert.Equal(t, e.diff, diff)
-		}
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			assert.Equal(
+				t,
+				test.engine.diff,
+				Diff(test.engine.engine, test.actual, test.expected),
+			)
+		})
 	}
 
 }

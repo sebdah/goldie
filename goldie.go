@@ -118,9 +118,7 @@ func New(t *testing.T, options ...Option) *Goldie {
 // Diff generates a string that shows the difference between the actual and the
 // expected. This method could be called in your own DiffFn in case you want
 // to leverage any of the engines defined.
-func Diff(engine DiffEngine, actual string, expected string) string {
-	var diff string
-
+func Diff(engine DiffEngine, actual string, expected string) (diff string) {
 	switch engine {
 	case Simple:
 		diff = fmt.Sprintf("Expected: %s\nGot: %s", expected, actual)

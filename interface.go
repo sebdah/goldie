@@ -6,8 +6,8 @@ import (
 )
 
 // Compile time assurance
-var _ Tester = (*goldie)(nil)
-var _ OptionProcessor = (*goldie)(nil)
+var _ Tester = (*Goldie)(nil)
+var _ OptionProcessor = (*Goldie)(nil)
 
 // Option defines the signature of a functional option method that can apply
 // options to an OptionProcessor.
@@ -31,6 +31,7 @@ type DiffFn func(actual string, expected string) string
 // available.
 type DiffEngine int
 
+//noinspection GoUnusedConst
 const (
 	// UndefinedDiff represents any undefined diff processor. If a new diff
 	// engine is implemented, it should be added to this enumeration and to the
@@ -98,6 +99,7 @@ func WithNameSuffix(suffix string) Option {
 // created.
 //
 // Defaults to 0644.
+//noinspection GoUnusedExportedFunction
 func WithFilePerms(mode os.FileMode) Option {
 	return func(o OptionProcessor) error {
 		return o.WithFilePerms(mode)
@@ -108,6 +110,7 @@ func WithFilePerms(mode os.FileMode) Option {
 // golden files are created.
 //
 // Defaults to 0755.
+//noinspection GoUnusedExportedFunction
 func WithDirPerms(mode os.FileMode) Option {
 	return func(o OptionProcessor) error {
 		return o.WithDirPerms(mode)
@@ -118,6 +121,7 @@ func WithDirPerms(mode os.FileMode) Option {
 // `diff` text.
 //
 // Default: ClassicDiff
+//noinspection GoUnusedExportedFunction
 func WithDiffEngine(engine DiffEngine) Option {
 	return func(o OptionProcessor) error {
 		return o.WithDiffEngine(engine)
@@ -127,6 +131,7 @@ func WithDiffEngine(engine DiffEngine) Option {
 // WithDiffFn sets the `diff` engine to be a function that implements the
 // DiffFn signature. This allows for any customized diff logic you would like
 // to create.
+//noinspection GoUnusedExportedFunction
 func WithDiffFn(fn DiffFn) Option {
 	return func(o OptionProcessor) error {
 		return o.WithDiffFn(fn)
@@ -137,6 +142,7 @@ func WithDiffFn(fn DiffFn) Option {
 // in the template that do not have corresponding data values passed in.
 //
 // Default value is false.
+//noinspection GoUnusedExportedFunction
 func WithIgnoreTemplateErrors(ignoreErrors bool) Option {
 	return func(o OptionProcessor) error {
 		return o.WithIgnoreTemplateErrors(ignoreErrors)
@@ -147,6 +153,7 @@ func WithIgnoreTemplateErrors(ignoreErrors bool) Option {
 // fixture directory to store all the golden files.
 //
 // Default value is false.
+//noinspection GoUnusedExportedFunction
 func WithTestNameForDir(use bool) Option {
 	return func(o OptionProcessor) error {
 		return o.WithTestNameForDir(use)
@@ -158,6 +165,7 @@ func WithTestNameForDir(use bool) Option {
 // the test name's directory. Otherwise, it will be in the fixture directory.
 //
 // Default value is false.
+//noinspection GoUnusedExportedFunction
 func WithSubTestNameForDir(use bool) Option {
 	return func(o OptionProcessor) error {
 		return o.WithSubTestNameForDir(use)

@@ -61,18 +61,14 @@ func (g *Goldie) Assert(t *testing.T, name string, actualData []byte) {
 // `a-z0-9\-\_` is a good idea).
 func (g *Goldie) AssertJson(t *testing.T, name string, actualJsonData interface{}) {
 	t.Helper()
-	buf := &bytes.Buffer{}
-	enc := json.NewEncoder(buf)
-	enc.SetIndent("", "  ")
-	enc.SetEscapeHTML(false)
-	err := enc.Encode(actualJsonData)
+	js, err := json.MarshalIndent(actualJsonData, "", "  ")
 
 	if err != nil {
 		t.Error(err)
 		t.FailNow()
 	}
 
-	g.Assert(t, name, normalizeLF(buf.Bytes()))
+	g.Assert(t, name, normalizeLF(js))
 }
 
 // AssertXml compares the actual xml data received with expected data in the

@@ -156,7 +156,7 @@ func (g *Goldie) compare(t *testing.T, name string, actualData []byte) error {
 		return fmt.Errorf("expected %s to be nil", err.Error())
 	}
 
-	if !bytes.Equal(actualData, expectedData) {
+	if !g.equal(actualData, expectedData) {
 		msg := "Result did not match the golden fixture. Diff is below:\n\n"
 		actual := string(actualData)
 		expected := string(expectedData)
@@ -202,7 +202,7 @@ func (g *Goldie) compareTemplate(t *testing.T, name string, data interface{}, ac
 		return newErrMissingKey(fmt.Sprintf("Template error: %s", err.Error()))
 	}
 
-	if !bytes.Equal(actualData, expectedData.Bytes()) {
+	if !g.equal(actualData, expectedData.Bytes()) {
 		msg := "Result did not match the golden fixture. Diff is below:\n\n"
 		actual := string(actualData)
 		expected := expectedData.String()
@@ -217,4 +217,11 @@ func (g *Goldie) compareTemplate(t *testing.T, name string, data interface{}, ac
 	}
 
 	return nil
+}
+
+func (g *Goldie) equal(actual, expected []byte) bool {
+	if g.equalFn != nil {
+		return g.equalFn(actual, expected)
+	}
+	return bytes.Equal(actual, expected)
 }

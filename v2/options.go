@@ -36,6 +36,13 @@ func (g *Goldie) WithDirPerms(mode os.FileMode) error {
 	return nil
 }
 
+// WithEqualFn sets the customized equality comapre function that implements
+// the EqualFn signature.
+func (g *Goldie) WithEqualFn(fn EqualFn) error {
+	g.equalFn = fn
+	return nil
+}
+
 // WithDiffEngine sets the `diff` engine that will be used to generate the
 // `diff` text.
 func (g *Goldie) WithDiffEngine(engine DiffEngine) error {

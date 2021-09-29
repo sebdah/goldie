@@ -80,6 +80,7 @@ type Goldie struct {
 	filePerms      os.FileMode
 	dirPerms       os.FileMode
 
+	equalFn              EqualFn
 	diffEngine           DiffEngine
 	diffFn               DiffFn
 	ignoreTemplateErrors bool

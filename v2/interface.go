@@ -23,6 +23,9 @@ type Tester interface {
 	GoldenFileName(t *testing.T, name string) string
 }
 
+// EqualFn compares if actual and expected are equal.
+type EqualFn func(actual []byte, expected []byte) bool
+
 // DiffFn takes in an actual and expected and will return a diff string
 // representing the differences between the two.
 type DiffFn func(actual string, expected string) string
@@ -68,6 +71,7 @@ type OptionProcessor interface {
 	WithFilePerms(mode os.FileMode) error
 	WithDirPerms(mode os.FileMode) error
 
+	WithEqualFn(fn EqualFn) error
 	WithDiffEngine(engine DiffEngine) error
 	WithDiffFn(fn DiffFn) error
 	WithIgnoreTemplateErrors(ignoreErrors bool) error
@@ -114,6 +118,15 @@ func WithFilePerms(mode os.FileMode) Option {
 func WithDirPerms(mode os.FileMode) Option {
 	return func(o OptionProcessor) error {
 		return o.WithDirPerms(mode)
+	}
+}
+
+// WithEqualFn sets the customized equality comapre function that implements
+// the EqualFn signature.
+//noinspection GoUnusedExportedFunction
+func WithEqualFn(fn EqualFn) Option {
+	return func(o OptionProcessor) error {
+		return o.WithEqualFn(fn)
 	}
 }
 

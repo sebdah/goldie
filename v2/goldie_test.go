@@ -50,6 +50,13 @@ func TestGoldenFileName(t *testing.T) {
 			},
 			expected: fmt.Sprintf("%s/%s/%s%s", defaultFixtureDir, "using_sub_test_name_for_dir", "example", defaultFileNameSuffix),
 		},
+		"using sub/sub test name for dir": {
+			name: "example",
+			options: []Option{
+				WithSubTestNameForDir(true),
+			},
+			expected: fmt.Sprintf("%s/%s/%s/%s%s", defaultFixtureDir, "using_sub", "sub_test_name_for_dir", "example", defaultFileNameSuffix),
+		},
 	}
 
 	for name, test := range tests {

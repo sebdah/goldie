@@ -199,7 +199,7 @@ func (g *Goldie) GoldenFileName(t *testing.T, name string) string {
 	if g.useSubTestNameForDir {
 		n := strings.Split(t.Name(), "/")
 		if len(n) > 1 {
-			dir = filepath.Join(dir, n[1])
+			dir = filepath.Join(append([]string{dir}, n[1:]...)...)
 		}
 	}
 

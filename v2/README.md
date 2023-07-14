@@ -136,6 +136,7 @@ func TestNewExample(t *testing.T) {
 | `WithNameSuffix`           | Suffix for fixture files.                                | `.golden`
 | `WithDirPerms`             | Directory permissions for fixtures                       | `0755`
 | `WithFilePerms`            | File permissions for fixtures                            | `0644`
+| `WithEqualFn`              | Custom equal logic to be used                            | None
 | `WithDiffEngine`           | Diff engine to use for diff output                       | `ClassicDiff`
 | `WithDiffFn`               | Custom diff logic to be used                             | None
 | `WithIgnoreTemplateErrors` | Ignore errors from templates                             | `false`

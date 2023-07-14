@@ -14,6 +14,7 @@ func TestCompare(t *testing.T) {
 		actualData   []byte
 		expectedData []byte
 		update       bool
+		equalfn      EqualFn
 		err          error
 	}{
 		{
@@ -21,6 +22,7 @@ func TestCompare(t *testing.T) {
 			actualData:   []byte("abc"),
 			expectedData: []byte("abc"),
 			update:       true,
+			equalfn:      nil,
 			err:          nil,
 		},
 		{
@@ -28,6 +30,7 @@ func TestCompare(t *testing.T) {
 			actualData:   []byte("abc"),
 			expectedData: []byte("abc"),
 			update:       false,
+			equalfn:      nil,
 			err:          &errFixtureNotFound{},
 		},
 		{
@@ -35,13 +38,25 @@ func TestCompare(t *testing.T) {
 			actualData:   []byte("bc"),
 			expectedData: []byte("abc"),
 			update:       true,
+			equalfn:      nil,
 			err:          &errFixtureMismatch{},
+		},
+		{
+			name:         "custom equalfn",
+			actualData:   []byte("ab"),
+			expectedData: []byte("abc"),
+			update:       true,
+			equalfn: func(actual, expected []byte) bool {
+				return actual[0] == expected[0]
+			},
+			err: nil,
 		},
 		{
 			name:         "nil",
 			actualData:   nil,
 			expectedData: nil,
 			update:       true,
+			equalfn:      nil,
 			err:          nil,
 		},
 	}
@@ -54,6 +69,7 @@ func TestCompare(t *testing.T) {
 			assert.Nil(t, err)
 		}
 
+		g.equalFn = test.equalfn
 		err := g.compare(t, test.name, test.actualData)
 		assert.IsType(t, test.err, err)
 

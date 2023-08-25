@@ -177,7 +177,8 @@ func (g *Goldie) ensureDir(loc string) error {
 		return os.MkdirAll(loc, g.dirPerms)
 
 	case err == nil && s.IsDir() && *clean && s.ModTime().UnixNano() != ts.UnixNano():
-		if err := os.RemoveAll(loc); err != nil {
+		// NOTE: My change will not clean tests no longer used
+		if err := removeFilesInDir(loc); err != nil {
 			return err
 		}
 		return os.MkdirAll(loc, g.dirPerms)
@@ -205,4 +206,27 @@ func (g *Goldie) GoldenFileName(t *testing.T, name string) string {
 	}
 
 	return filepath.Join(dir, fmt.Sprintf("%s%s", name, g.fileNameSuffix))
+}
+
+// removeFilesInDir removes all files in a given location
+// but not the directories
+func removeFilesInDir(loc string) error {
+	content, err := ioutil.ReadDir(loc)
+	if err != nil {
+		return fmt.Errorf("failed to read dir <%s>: %w", loc, err)
+	}
+
+	for _, fi := range content {
+		if fi.IsDir() {
+			continue
+		}
+
+		fp := filepath.Join(loc, fi.Name())
+
+		if err := os.Remove(fp); err != nil {
+			return fmt.Errorf("failed to remove file <%s>: %w", fp, err)
+		}
+	}
+
+	return nil
 }

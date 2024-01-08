@@ -209,17 +209,29 @@ Got: Lorem ipsum dolor.`},
 }
 
 func TestCleanFunction(t *testing.T) {
+
 	savedCleanState := *clean
 	*clean = false
 	savedUpdateState := *update
 	*update = true
+	t.Cleanup(func() {
+		*clean = savedCleanState
+		*update = savedUpdateState
+	})
+
 	ts = time.Now()
 
 	sampleData := []byte("sample data")
 	fixtureDir := "test-fixtures"
 	fixtureSubDirA := fixtureDir + "/a"
 	fixtureSubDirB := fixtureDir + "/b"
+	fixtureNestedDirAC := fixtureSubDirA + "/c"
 	suffix := ".golden"
+
+	t.Cleanup(func() {
+		err := os.RemoveAll(fixtureDir)
+		assert.Nil(t, err)
+	})
 
 	// The first time running go test, with -update, without -clean
 	firstTests := []struct {
@@ -227,6 +239,7 @@ func TestCleanFunction(t *testing.T) {
 		filePrefix        string
 	}{
 		{fixtureDirWithSub: fixtureSubDirA, filePrefix: "example-a1"},
+		{fixtureDirWithSub: fixtureNestedDirAC, filePrefix: "example-ac1"},
 		{fixtureDirWithSub: fixtureSubDirA, filePrefix: "example-a2"},
 		{fixtureDirWithSub: fixtureSubDirB, filePrefix: "example-b1"},
 		{fixtureDirWithSub: fixtureSubDirB, filePrefix: "example-b2"},
@@ -260,6 +273,7 @@ func TestCleanFunction(t *testing.T) {
 		filePrefix        string
 	}{
 		{fixtureDirWithSub: fixtureSubDirA, filePrefix: "example-a3"},
+		{fixtureDirWithSub: fixtureNestedDirAC, filePrefix: "example-ac2"},
 		{fixtureDirWithSub: fixtureSubDirA, filePrefix: "example-a4"},
 		{fixtureDirWithSub: fixtureSubDirB, filePrefix: "example-b3"},
 		{fixtureDirWithSub: fixtureSubDirB, filePrefix: "example-b4"},
@@ -274,7 +288,10 @@ func TestCleanFunction(t *testing.T) {
 		t.Run(fmt.Sprint(i), func(t *testing.T) {
 			g.Assert(t, tt.filePrefix, sampleData)
 		})
+	}
 
+	// make sure all the output files from the second run now exist
+	for _, tt := range secondTests {
 		fullPath := fmt.Sprintf("%s%s",
 			filepath.Join(tt.fixtureDirWithSub, tt.filePrefix),
 			suffix,
@@ -295,9 +312,4 @@ func TestCleanFunction(t *testing.T) {
 		assert.Error(t, err)
 		assert.True(t, os.IsNotExist(err))
 	}
-
-	err := os.RemoveAll(fixtureDir)
-	assert.Nil(t, err)
-	*clean = savedCleanState
-	*update = savedUpdateState
 }

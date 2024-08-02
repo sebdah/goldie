@@ -176,7 +176,7 @@ func (g *Goldie) ensureDir(loc string) error {
 		// the location does not exist, so make directories to there
 		return os.MkdirAll(loc, g.dirPerms)
 
-	case err == nil && s.IsDir() && *clean && s.ModTime().UnixNano() != ts.UnixNano():
+	case err == nil && s.IsDir() && *clean && s.ModTime().UnixNano() < ts.UnixNano():
 		if err := os.RemoveAll(loc); err != nil {
 			return err
 		}

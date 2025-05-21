@@ -131,30 +131,280 @@ func TestEnsureDir(t *testing.T) {
 	}
 }
 
+func TestMeta(t *testing.T) {
+	tests := []struct {
+		name     string
+		data     interface{}
+		expected map[string]string
+	}{
+		{
+			name: "successful update",
+			data: map[string]interface{}{
+				"NAME": "example",
+			},
+			expected: map[string]string{
+				"example": ".NAME",
+			},
+		},
+		{
+			name: "replace most specific keys first",
+			data: map[string]string{
+				"FOO":    "foo",
+				"FOOBAR": "foobar",
+			},
+			expected: map[string]string{
+				"foo":    ".FOO",
+				"foobar": ".FOOBAR",
+			},
+		},
+		{
+			name: "int",
+			data: 123,
+			expected: map[string]string{
+				"123": ".",
+			},
+		},
+		{
+			name: "scalar types in a map",
+			data: map[string]interface{}{
+				"NAME":   "example",
+				"NUMBER": 123,
+				"BOOL":   true,
+				"FLOAT":  123.456,
+			},
+			expected: map[string]string{
+				"example": ".NAME",
+				"123":     ".NUMBER",
+				"true":    ".BOOL",
+				"123.456": ".FLOAT",
+			},
+		},
+		{
+			name: "scalar types in a struct",
+			data: struct {
+				Name   string
+				Number int
+				Bool   bool
+				Float  float64
+			}{
+				Name:   "example",
+				Number: 123,
+				Bool:   true,
+				Float:  123.456,
+			},
+			expected: map[string]string{
+				"example": ".Name",
+				"123":     ".Number",
+				"true":    ".Bool",
+				"123.456": ".Float",
+			},
+		},
+		{
+			name: "scalar types in a slice",
+			data: []interface{}{
+				"example",
+				123,
+				true,
+				123.456,
+			},
+			expected: map[string]string{
+				"example": "index (.) 0",
+				"123":     "index (.) 1",
+				"true":    "index (.) 2",
+				"123.456": "index (.) 3",
+			},
+		},
+		{
+			name: "nested maps",
+			data: map[string]interface{}{
+				"FOO": map[string]interface{}{
+					"BAR": "bar",
+					"BAZ": "baz",
+				},
+			},
+			expected: map[string]string{
+				"bar": ".FOO.BAR",
+				"baz": ".FOO.BAZ",
+			},
+		},
+		{
+			name: "nested structs",
+			data: struct {
+				Foo struct {
+					Bar string
+					Baz string
+				}
+			}{
+				Foo: struct {
+					Bar string
+					Baz string
+				}{
+					Bar: "bar",
+					Baz: "baz",
+				},
+			},
+			expected: map[string]string{
+				"bar": ".Foo.Bar",
+				"baz": ".Foo.Baz",
+			},
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			assert.Equal(t, test.expected, Meta(test.data))
+		})
+	}
+}
+
 // TODO: This test could use a little <3. It should test some more negative
 // cases.
 func TestUpdate(t *testing.T) {
 	tests := map[string]struct {
-		name string
-		data []byte
-		err  error
+		name       string
+		actualData []byte
+		err        error
 	}{
 		"successful update": {
-			name: "abc",
-			data: []byte("some example data"),
-			err:  nil,
+			name:       "abc",
+			actualData: []byte("some example data"),
+			err:        nil,
 		},
 	}
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
 			g := New(t)
-			err := g.Update(t, test.name, test.data)
+			err := g.Update(t, test.name, test.actualData)
 			assert.Equal(t, test.err, err)
 
 			data, err := ioutil.ReadFile(g.GoldenFileName(t, test.name))
 			assert.Nil(t, err)
-			assert.Equal(t, test.data, data)
+			assert.Equal(t, string(test.actualData), string(data))
+
+			err = os.RemoveAll(g.fixtureDir)
+			assert.Nil(t, err)
+		})
+	}
+}
+
+func TestUpdateWithTemplate(t *testing.T) {
+	tests := []struct {
+		name         string
+		data         interface{}
+		actualData   []byte
+		expectedData []byte
+		err          error
+	}{
+		{
+			name: "successful update",
+			data: map[string]interface{}{
+				"NAME": "example",
+			},
+			actualData:   []byte("abc example"),
+			expectedData: []byte("abc {{.NAME}}"),
+			err:          nil,
+		},
+		{
+			name: "replace most specific keys first",
+			data: map[string]string{
+				"FOO":    "foo",
+				"FOOBAR": "foobar",
+			},
+			actualData:   []byte("testing foo and foobar"),
+			expectedData: []byte("testing {{.FOO}} and {{.FOOBAR}}"),
+			err:          nil,
+		},
+		{
+			name:         "int",
+			data:         123,
+			actualData:   []byte("abc 123"),
+			expectedData: []byte("abc {{.}}"),
+			err:          nil,
+		},
+		{
+			name: "scalar types in a map",
+			data: map[string]interface{}{
+				"NAME":   "example",
+				"NUMBER": 123,
+				"BOOL":   true,
+				"FLOAT":  123.456,
+			},
+			actualData:   []byte("abc example 123 true 123.456"),
+			expectedData: []byte("abc {{.NAME}} {{.NUMBER}} {{.BOOL}} {{.FLOAT}}"),
+			err:          nil,
+		},
+		{
+			name: "scalar types in a struct",
+			data: struct {
+				Name   string
+				Number int
+				Bool   bool
+				Float  float64
+			}{
+				Name:   "example",
+				Number: 123,
+				Bool:   true,
+				Float:  123.456,
+			},
+			actualData:   []byte("abc example 123 true 123.456"),
+			expectedData: []byte("abc {{.Name}} {{.Number}} {{.Bool}} {{.Float}}"),
+			err:          nil,
+		},
+		{
+			name: "scalar types in a slice",
+			data: []interface{}{
+				"example",
+				123,
+				true,
+				123.456,
+			},
+			actualData:   []byte("abc example 123 true 123.456"),
+			expectedData: []byte("abc {{index (.) 0}} {{index (.) 1}} {{index (.) 2}} {{index (.) 3}}"),
+			err:          nil,
+		},
+		{
+			name: "nested maps",
+			data: map[string]interface{}{
+				"FOO": map[string]interface{}{
+					"BAR": "bar",
+					"BAZ": "baz",
+				},
+			},
+			actualData:   []byte("abc bar baz"),
+			expectedData: []byte("abc {{.FOO.BAR}} {{.FOO.BAZ}}"),
+			err:          nil,
+		},
+		{
+			name: "nested structs",
+			data: struct {
+				Foo struct {
+					Bar string
+					Baz string
+				}
+			}{
+				Foo: struct {
+					Bar string
+					Baz string
+				}{
+					Bar: "bar",
+					Baz: "baz",
+				},
+			},
+			actualData:   []byte("abc bar baz"),
+			expectedData: []byte("abc {{.Foo.Bar}} {{.Foo.Baz}}"),
+			err:          nil,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			g := New(t)
+			err := g.UpdateWithTemplate(t, test.name, test.data, test.actualData)
+			assert.Equal(t, test.err, err)
+
+			got, err := ioutil.ReadFile(g.GoldenFileName(t, test.name))
+			assert.Nil(t, err)
+			assert.Equal(t, string(test.expectedData), string(got))
 
 			err = os.RemoveAll(g.fixtureDir)
 			assert.Nil(t, err)

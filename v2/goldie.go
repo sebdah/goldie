@@ -9,11 +9,14 @@
 package goldie
 
 import (
+	"bytes"
 	"flag"
 	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"reflect"
+	"sort"
 	"strings"
 	"testing"
 	"time"
@@ -144,6 +147,42 @@ func Diff(engine DiffEngine, actual string, expected string) (diff string) {
 	return diff
 }
 
+// Meta takes any data structure and returns a map of the data structure's
+// values to their paths. This allows us to replace values in the golden file
+// with template variables that match the values. These values are
+func Meta(a interface{}) map[string]string {
+	meta := map[string]string{}
+	v := reflect.ValueOf(a)
+	var recurseValuePath func(v reflect.Value, path string)
+	recurseValuePath = func(v reflect.Value, path string) {
+		switch v.Kind() {
+		case reflect.Ptr:
+			recurseValuePath(v.Elem(), path)
+		case reflect.Interface:
+			recurseValuePath(reflect.ValueOf(v.Interface()), path)
+		case reflect.Struct:
+			for i := 0; i < v.NumField(); i++ {
+				key := v.Type().Field(i).Name
+				recurseValuePath(v.Field(i), joinPath(path, key))
+			}
+		case reflect.Map:
+			iter := v.MapRange()
+			for iter.Next() {
+				key := iter.Key().Interface()
+				recurseValuePath(iter.Value(), joinPath(path, key))
+			}
+		case reflect.Array, reflect.Slice:
+			for i := 0; i < v.Len(); i++ {
+				recurseValuePath(v.Index(i), fmt.Sprintf("index (%s) %d", path, i))
+			}
+		default:
+			meta[fmt.Sprintf("%v", v)] = path
+		}
+	}
+	recurseValuePath(v, ".")
+	return meta
+}
+
 // Update will update the golden fixtures with the received actual data.
 //
 // This method does not need to be called from code, but it's exposed so that
@@ -165,6 +204,36 @@ func (g *Goldie) Update(t *testing.T, name string, actualData []byte) error {
 	}
 
 	return nil
+}
+
+func (g *Goldie) UpdateWithTemplate(t *testing.T, name string, data interface{}, actualData []byte) error {
+	// create a meta map of the data
+	meta := Meta(data)
+
+	// get a reverse-sorted list of map keys so that when we loop over them,
+	// we replace the most specific keys first.
+	keys := make([]string, 0, len(meta))
+	for key := range meta {
+		keys = append(keys, key)
+	}
+	sort.Sort(sort.Reverse(sort.StringSlice(keys)))
+
+	// loop over the meta map and replace any instances of the map key with
+	// the map value (which contains the path reference to the value in the
+	// data structure).
+	for _, key := range keys {
+		ref := fmt.Sprintf("{{%s}}", meta[key])
+		actualData = bytes.ReplaceAll(actualData, []byte(key), []byte(ref))
+	}
+
+	return g.Update(t, name, actualData)
+}
+
+func joinPath(path string, key interface{}) string {
+	if path == "." {
+		return fmt.Sprintf("%s%v", path, key)
+	}
+	return fmt.Sprintf("%s.%v", path, key)
 }
 
 // ensureDir will create the fixture folder if it does not already exist.

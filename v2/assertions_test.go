@@ -125,7 +125,16 @@ func TestCompareTemplate(t *testing.T) {
 			data:         nil,
 			update:       true,
 			err:          &errMissingKey{},
-		}}
+		},
+		{
+			name:         "example",
+			actualData:   []byte("abc example"),
+			expectedData: []byte("abc {{ index (.) 1 }}"),
+			data:         []interface{}{"abc", "example"},
+			update:       true,
+			err:          nil,
+		},
+	}
 
 	g := New(t)
 

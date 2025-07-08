@@ -62,12 +62,12 @@ var (
 	// update determines if the actual received data should be written to the
 	// golden files or not. This should be true when you need to update the
 	// data, but false when actually running the tests.
-	update = flag.Bool("update", false, "Update golden test file fixture")
+	update = flag.Bool("update", truthy(os.Getenv("GOLDIE_UPDATE")), "Update golden test file fixture")
 
 	// clean determines if we should remove old golden test files in the output
 	// directory or not. This only takes effect if we are updating the golden
 	// test files.
-	clean = flag.Bool("clean", false, "Clean old golden test files before writing new olds")
+	clean = flag.Bool("clean", truthy(os.Getenv("GOLDIE_CLEAN")), "Clean old golden test files before writing new olds")
 
 	// ts saves the timestamp of the test run, we use ts to mark the
 	// modification time of golden file dirs, for cleaning if required by
@@ -274,4 +274,13 @@ func (g *Goldie) GoldenFileName(t *testing.T, name string) string {
 	}
 
 	return filepath.Join(dir, fmt.Sprintf("%s%s", name, g.fileNameSuffix))
+}
+
+func truthy(s string) bool {
+	switch strings.ToLower(s) {
+	case "1", "true", "t":
+		return true
+	default:
+		return false
+	}
 }

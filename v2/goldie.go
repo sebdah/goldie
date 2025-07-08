@@ -147,10 +147,10 @@ func Diff(engine DiffEngine, actual string, expected string) (diff string) {
 	return diff
 }
 
-// Meta takes any data structure and returns a map of the data structure's
+// meta takes any data structure and returns a map of the data structure's
 // values to their paths. This allows us to replace values in the golden file
-// with template variables that match the values. These values are
-func Meta(a interface{}) map[string]string {
+// with template variables that match the values.
+func meta(a interface{}) map[string]string {
 	meta := map[string]string{}
 	v := reflect.ValueOf(a)
 	var recurseValuePath func(v reflect.Value, path string)
@@ -187,7 +187,7 @@ func Meta(a interface{}) map[string]string {
 //
 // This method does not need to be called from code, but it's exposed so that
 // it can be explicitly called if needed. The more common approach would be to
-// update using `go test -update ./...`.
+// update using `go test -update ./...` or `GOLDIE_UPDATE=true go test ./...`.
 func (g *Goldie) Update(t *testing.T, name string, actualData []byte) error {
 	goldenFile := g.GoldenFileName(t, name)
 	goldenFileDir := filepath.Dir(goldenFile)
@@ -206,9 +206,16 @@ func (g *Goldie) Update(t *testing.T, name string, actualData []byte) error {
 	return nil
 }
 
+// UpdateWithTemplate will update the golden fixtures with the received actual
+// data, replacing any values in the actual data with template variables that
+// match the values in the data structure.
+//
+// This method does not need to be called from code, but it's exposed so that
+// it can be explicitly called if needed. The more common approach would be to
+// update using `go test -update ./...` or `GOLDIE_UPDATE=true go test ./...`.
 func (g *Goldie) UpdateWithTemplate(t *testing.T, name string, data interface{}, actualData []byte) error {
 	// create a meta map of the data
-	meta := Meta(data)
+	meta := meta(data)
 
 	// get a reverse-sorted list of map keys so that when we loop over them,
 	// we replace the most specific keys first.
@@ -229,6 +236,9 @@ func (g *Goldie) UpdateWithTemplate(t *testing.T, name string, data interface{},
 	return g.Update(t, name, actualData)
 }
 
+// joinPath will join the path with the key, ensuring that the path is
+// formatted correctly. If the path is ".", it will simply append the key to
+// the path. Otherwise, it will append the key with a dot separator.
 func joinPath(path string, key interface{}) string {
 	if path == "." {
 		return fmt.Sprintf("%s%v", path, key)

@@ -16,8 +16,8 @@ import (
 // golden files. If the update flag is set, it will also update the golden
 // file.
 //
-// `name` refers to the name of the test and it should typically be unique
-// within the package. Also it should be a valid file name (so keeping to
+// `name` refers to the name of the test, and it should typically be unique
+// within the package. Also, it should be a valid file name (so keeping to
 // `a-z0-9\-\_` is a good idea).
 func (g *Goldie) Assert(t *testing.T, name string, actualData []byte) {
 	t.Helper()

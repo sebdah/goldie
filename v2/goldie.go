@@ -2,7 +2,7 @@
 // typically used for testing responses with larger data bodies.
 //
 // The concept is straight forward. Valid response data is stored in a "golden
-// file". The actual response data will be byte compared with the golden file
+// file". The actual response data will be byte compared with the golden file,
 // and the test will fail if there is a difference.
 //
 // Updating the golden file can be done by running `go test -update ./...`.
@@ -12,7 +12,6 @@ import (
 	"bytes"
 	"flag"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -75,8 +74,8 @@ var (
 	// test files.
 	clean = flag.Bool("clean", truthy(os.Getenv("GOLDIE_CLEAN")), "Clean old golden test files before writing new olds")
 
-	// ts saves the timestamp of the test run, we use ts to mark the
-	// modification time of golden file dirs, for cleaning if required by
+	// ts saves the timestamp of the test run. We use ts to mark the
+	// modification time of golden file dirs for cleaning if required by
 	// `-clean` flag.
 	ts = time.Now()
 )
@@ -148,6 +147,9 @@ func Diff(engine DiffEngine, actual string, expected string) (diff string) {
 		dmp := diffmatchpatch.New()
 		diffs := dmp.DiffMain(actual, expected, false)
 		diff = dmp.DiffPrettyText(diffs)
+
+	default: // Simple
+		diff = fmt.Sprintf("Expected: %s\nGot: %s", expected, actual)
 	}
 
 	return diff
@@ -201,7 +203,7 @@ func (g *Goldie) Update(t *testing.T, name string, actualData []byte) error {
 		return err
 	}
 
-	if err := ioutil.WriteFile(goldenFile, actualData, g.filePerms); err != nil {
+	if err := os.WriteFile(goldenFile, actualData, g.filePerms); err != nil {
 		return err
 	}
 
@@ -220,7 +222,6 @@ func (g *Goldie) Update(t *testing.T, name string, actualData []byte) error {
 // it can be explicitly called if needed. The more common approach would be to
 // update using `go test -update ./...` or `GOLDIE_UPDATE=true go test ./...`.
 func (g *Goldie) UpdateWithTemplate(t *testing.T, name string, data interface{}, actualData []byte) error {
-	// create a meta map of the data
 	meta := meta(data)
 
 	// get a reverse-sorted list of map keys so that when we loop over them,
@@ -231,7 +232,7 @@ func (g *Goldie) UpdateWithTemplate(t *testing.T, name string, data interface{},
 	}
 	sort.Sort(sort.Reverse(sort.StringSlice(keys)))
 
-	// loop over the meta map and replace any instances of the map key with
+	// loop over the map and replace any instances of the map key with
 	// the map value (which contains the path reference to the value in the
 	// data structure).
 	for _, key := range keys {

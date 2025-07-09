@@ -18,8 +18,18 @@ jobs:
     - name: Check out code into the Go module directory
       uses: actions/checkout@v2
 
-    - name: Build
+    - name: Build v1
       run: go build -v .
 
-    - name: Test
+    - name: Test v1
       run: go test -v ./...
+
+    - name: Build v2
+      run: |
+        cd v2
+        go build -v .
+
+    - name: Test v2
+      run: |
+        cd v2
+        go test -v ./...

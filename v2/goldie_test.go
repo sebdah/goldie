@@ -521,6 +521,8 @@ func TestCleanFunction(t *testing.T) {
 	}
 
 	*clean = true
+	// Ensure filesystem timestamps increase enough to trigger cleaning logic
+	time.Sleep(2 * time.Second)
 	ts = time.Now()
 
 	// The second time running go test, with -update and -clean

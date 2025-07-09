@@ -1,25 +1,41 @@
 name: Go
 
-on: [push]
+on:
+  push
 
 jobs:
+#  v1:
+#    name: Run v1 tests
+#    runs-on: ubuntu-latest
+#    steps:
+#    - name: Set up Go 1.x
+#      uses: actions/setup-go@v2
+#      with:
+#        go-version: ^1.14
+#      id: go
+#    - name: Check out code into the Go module directory
+#      uses: actions/checkout@v2
+#    - name: Build
+#      run: go build -v .
+#    - name: Test
+#      run: go test -v ./...
 
-  build:
-    name: Run tests
+  v2:
+    name: Run v2 tests
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+        working-directory: v2
     steps:
-
     - name: Set up Go 1.x
       uses: actions/setup-go@v2
       with:
         go-version: ^1.14
       id: go
-
     - name: Check out code into the Go module directory
       uses: actions/checkout@v2
-
     - name: Build
       run: go build -v .
-
     - name: Test
       run: go test -v ./...

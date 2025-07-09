@@ -465,7 +465,6 @@ Got: Lorem ipsum dolor.`},
 }
 
 func TestCleanFunction(t *testing.T) {
-
 	savedCleanState := *clean
 	*clean = false
 	savedUpdateState := *update
@@ -548,12 +547,10 @@ func TestCleanFunction(t *testing.T) {
 
 	// make sure all the output files from the second run now exist
 	for _, tt := range secondTests {
-		fullPath := fmt.Sprintf("%s%s",
+		_, err := os.Stat(fmt.Sprintf("%s%s",
 			filepath.Join(tt.fixtureDirWithSub, tt.filePrefix),
 			suffix,
-		)
-
-		_, err := os.Stat(fullPath)
+		))
 		assert.Nil(t, err)
 	}
 

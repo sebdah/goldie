@@ -61,7 +61,7 @@ var (
 	// update determines if the actual received data should be written to the
 	// golden files or not. This should be true when you need to update the
 	// golden files, but false when actually running the tests.
-	update = flag.Bool("update", truthy(os.Getenv("GOLDIE_UPDATE")), "Update golden test file fixture")
+	update = flag.Bool("update", false, "Update golden test file fixture")
 
 	// withTemplate determines if the templating data should be applied to the
 	// golden files or not. This should be true when you need to update the
@@ -72,7 +72,7 @@ var (
 	// clean determines if we should remove old golden test files in the output
 	// directory or not. This only takes effect if we are updating the golden
 	// test files.
-	clean = flag.Bool("clean", truthy(os.Getenv("GOLDIE_CLEAN")), "Clean old golden test files before writing new olds")
+	clean = flag.Bool("clean", false, "Clean old golden test files before writing new olds")
 
 	// ts saves the timestamp of the test run. We use ts to mark the
 	// modification time of golden file dirs for cleaning if required by

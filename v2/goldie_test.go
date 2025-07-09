@@ -2,7 +2,6 @@ package goldie
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
@@ -251,7 +250,7 @@ func TestMeta(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			assert.Equal(t, test.expected, Meta(test.data))
+			assert.Equal(t, test.expected, meta(test.data))
 		})
 	}
 }
@@ -277,7 +276,7 @@ func TestUpdate(t *testing.T) {
 			err := g.Update(t, test.name, test.actualData)
 			assert.Equal(t, test.err, err)
 
-			data, err := ioutil.ReadFile(g.GoldenFileName(t, test.name))
+			data, err := os.ReadFile(g.GoldenFileName(t, test.name))
 			assert.Nil(t, err)
 			assert.Equal(t, string(test.actualData), string(data))
 
@@ -402,7 +401,7 @@ func TestUpdateWithTemplate(t *testing.T) {
 			err := g.UpdateWithTemplate(t, test.name, test.data, test.actualData)
 			assert.Equal(t, test.err, err)
 
-			got, err := ioutil.ReadFile(g.GoldenFileName(t, test.name))
+			got, err := os.ReadFile(g.GoldenFileName(t, test.name))
 			assert.Nil(t, err)
 			assert.Equal(t, string(test.expectedData), string(got))
 
@@ -558,7 +557,7 @@ func TestCleanFunction(t *testing.T) {
 		assert.Nil(t, err)
 	}
 
-	// make sure output files of the first run doesnt exist
+	// make sure output files' of the first run doesn't exist
 	for _, tt := range firstTests {
 		fullPath := fmt.Sprintf("%s%s",
 			filepath.Join(tt.fixtureDirWithSub, tt.filePrefix),

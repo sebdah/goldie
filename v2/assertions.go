@@ -113,7 +113,12 @@ func normalizeLF(d []byte) []byte {
 func (g *Goldie) AssertWithTemplate(t *testing.T, name string, data interface{}, actualData []byte) {
 	t.Helper()
 	if *update {
-		err := g.Update(t, name, actualData)
+		var err error
+		if *withTemplate {
+			err = g.UpdateWithTemplate(t, name, data, actualData)
+		} else {
+			err = g.Update(t, name, actualData)
+		}
 		if err != nil {
 			t.Error(err)
 			t.FailNow()

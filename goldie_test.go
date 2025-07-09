@@ -1,10 +1,12 @@
 package goldie
 
 import (
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"syscall"
 	"testing"
 	"time"
 
@@ -128,22 +130,54 @@ func TestEnsureDir(t *testing.T) {
 // cases.
 func TestUpdate(t *testing.T) {
 	tests := map[string]struct {
-		name string
-		data []byte
-		err  error
+		name       string
+		data       []byte
+		fixtureDir string
+		err        error
 	}{
 		"successful update": {
 			name: "abc",
 			data: []byte("some example data"),
 			err:  nil,
 		},
+		"fixture directory is a file": {
+			name:       "abc",
+			data:       []byte("some data"),
+			fixtureDir: filepath.Join(os.TempDir(), "fixture-file"),
+			err:        newErrFixtureDirectoryIsFile(filepath.Join(os.TempDir(), "fixture-file")),
+		},
+		"read only filesystem": {
+			name:       "abc",
+			data:       []byte("data"),
+			fixtureDir: "/sys",
+			err:        syscall.EROFS,
+		},
 	}
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
 			g := New(t)
+			if test.fixtureDir != "" {
+				g.fixtureDir = test.fixtureDir
+			}
+
+			if name == "fixture directory is a file" {
+				// ensure the path exists as a file
+				_ = os.MkdirAll(filepath.Dir(g.fixtureDir), g.dirPerms)
+				f, err := os.Create(g.fixtureDir)
+				require.NoError(t, err)
+				_ = f.Close()
+			}
+
 			err := g.Update(t, test.name, test.data)
+			if errors.Is(test.err, syscall.EROFS) {
+				assert.True(t, errors.Is(err, syscall.EROFS))
+				return
+			}
 			assert.Equal(t, test.err, err)
+			if err != nil {
+				return
+			}
 
 			data, err := ioutil.ReadFile(g.GoldenFileName(t, test.name))
 			assert.Nil(t, err)

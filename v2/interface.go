@@ -13,17 +13,15 @@ var _ OptionProcessor = (*Goldie)(nil)
 // options to an OptionProcessor.
 type Option func(OptionProcessor) error
 
-type TB testing.TB
-
 // Tester defines the methods that any golden tester should support.
 type Tester interface {
-	Assert(t TB, name string, actualData []byte)
-	AssertJson(t TB, name string, actualJsonData interface{})
-	AssertXml(t TB, name string, actualXmlData interface{})
-	AssertWithTemplate(t TB, name string, data interface{}, actualData []byte)
-	Update(t TB, name string, actualData []byte) error
-	GoldenFileName(t TB, name string) string
-	GoldenFileData(t TB, name string) []byte
+	Assert(t testing.TB, name string, actualData []byte)
+	AssertJson(t testing.TB, name string, actualJsonData interface{})
+	AssertXml(t testing.TB, name string, actualXmlData interface{})
+	AssertWithTemplate(t testing.TB, name string, data interface{}, actualData []byte)
+	Update(t testing.TB, name string, actualData []byte) error
+	GoldenFileName(t testing.TB, name string) string
+	GoldenFileData(t testing.TB, name string) []byte
 }
 
 // EqualFn compares if actual and expected are equal.

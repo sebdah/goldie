@@ -17,6 +17,7 @@ import (
 	"reflect"
 	"sort"
 	"strings"
+	"testing"
 	"time"
 
 	"github.com/pmezard/go-difflib/difflib"
@@ -99,7 +100,7 @@ type Goldie struct {
 
 // New creates a new golden file tester. If there is an issue with applying any
 // of the options, an error will be reported and t.FailNow() will be called.
-func New(t TB, options ...Option) *Goldie {
+func New(t testing.TB, options ...Option) *Goldie {
 	g := Goldie{
 		fixtureDir:           defaultFixtureDir,
 		fileNameSuffix:       defaultFileNameSuffix,
@@ -195,7 +196,7 @@ func meta(a interface{}) map[string]string {
 // This method does not need to be called from code, but it's exposed so that
 // it can be explicitly called if needed. The more common approach would be to
 // update using `go test -update ./...` or `GOLDIE_UPDATE=true go test ./...`.
-func (g *Goldie) Update(t TB, name string, actualData []byte) error {
+func (g *Goldie) Update(t testing.TB, name string, actualData []byte) error {
 	goldenFile := g.GoldenFileName(t, name)
 	goldenFileDir := filepath.Dir(goldenFile)
 	if err := g.ensureDir(goldenFileDir); err != nil {
@@ -220,7 +221,7 @@ func (g *Goldie) Update(t TB, name string, actualData []byte) error {
 // This method does not need to be called from code, but it's exposed so that
 // it can be explicitly called if needed. The more common approach would be to
 // update using `go test -update ./...` or `GOLDIE_UPDATE=true go test ./...`.
-func (g *Goldie) UpdateWithTemplate(t TB, name string, data interface{}, actualData []byte) error {
+func (g *Goldie) UpdateWithTemplate(t testing.TB, name string, data interface{}, actualData []byte) error {
 	meta := meta(data)
 
 	// get a reverse-sorted list of map keys so that when we loop over them,
@@ -275,7 +276,7 @@ func (g *Goldie) ensureDir(loc string) error {
 }
 
 // GoldenFileName simply returns the file name of the golden file fixture.
-func (g *Goldie) GoldenFileName(t TB, name string) string {
+func (g *Goldie) GoldenFileName(t testing.TB, name string) string {
 	dir := g.fixtureDir
 
 	if g.useTestNameForDir {
@@ -296,7 +297,7 @@ func (g *Goldie) GoldenFileName(t TB, name string) string {
 // `name` refers to the name of the test and it should typically be unique within the package.
 // Also it should be a valid file name (so keeping to `a-z0-9\-\_` is a good
 // idea).
-func (g *Goldie) GoldenFileData(t TB, name string) []byte {
+func (g *Goldie) GoldenFileData(t testing.TB, name string) []byte {
 	expectedData, err := g.goldenFileData(t, name)
 	if err != nil {
 		t.Fatal(err)
@@ -308,7 +309,7 @@ func (g *Goldie) GoldenFileData(t TB, name string) []byte {
 // `name` refers to the name of the test and it should typically be unique within the package.
 // Also it should be a valid file name (so keeping to `a-z0-9\-\_` is a good
 // idea).
-func (g *Goldie) goldenFileData(t TB, name string) ([]byte, error) {
+func (g *Goldie) goldenFileData(t testing.TB, name string) ([]byte, error) {
 	expectedData, err := os.ReadFile(g.GoldenFileName(t, name))
 
 	if err != nil {

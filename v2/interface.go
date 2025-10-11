@@ -15,12 +15,13 @@ type Option func(OptionProcessor) error
 
 // Tester defines the methods that any golden tester should support.
 type Tester interface {
-	Assert(t *testing.T, name string, actualData []byte)
-	AssertJson(t *testing.T, name string, actualJsonData interface{})
-	AssertXml(t *testing.T, name string, actualXmlData interface{})
-	AssertWithTemplate(t *testing.T, name string, data interface{}, actualData []byte)
-	Update(t *testing.T, name string, actualData []byte) error
-	GoldenFileName(t *testing.T, name string) string
+	Assert(t testing.TB, name string, actualData []byte)
+	AssertJson(t testing.TB, name string, actualJsonData interface{})
+	AssertXml(t testing.TB, name string, actualXmlData interface{})
+	AssertWithTemplate(t testing.TB, name string, data interface{}, actualData []byte)
+	Update(t testing.TB, name string, actualData []byte) error
+	GoldenFileName(t testing.TB, name string) string
+	GoldenFileData(t testing.TB, name string) []byte
 }
 
 // EqualFn compares if actual and expected are equal.

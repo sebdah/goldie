@@ -19,7 +19,7 @@ import (
 // `name` refers to the name of the test, and it should typically be unique
 // within the package. Also, it should be a valid file name (so keeping to
 // `a-z0-9\-\_` is a good idea).
-func (g *Goldie) Assert(t *testing.T, name string, actualData []byte) {
+func (g *Goldie) Assert(t testing.TB, name string, actualData []byte) {
 	t.Helper()
 	if *update {
 		err := g.Update(t, name, actualData)
@@ -59,7 +59,7 @@ func (g *Goldie) Assert(t *testing.T, name string, actualData []byte) {
 // `name` refers to the name of the test and it should typically be unique
 // within the package. Also it should be a valid file name (so keeping to
 // `a-z0-9\-\_` is a good idea).
-func (g *Goldie) AssertJson(t *testing.T, name string, actualJsonData interface{}) {
+func (g *Goldie) AssertJson(t testing.TB, name string, actualJsonData interface{}) {
 	t.Helper()
 	js, err := json.MarshalIndent(actualJsonData, "", "  ")
 
@@ -78,7 +78,7 @@ func (g *Goldie) AssertJson(t *testing.T, name string, actualJsonData interface{
 // `name` refers to the name of the test and it should typically be unique
 // within the package. Also it should be a valid file name (so keeping to
 // `a-z0-9\-\_` is a good idea).
-func (g *Goldie) AssertXml(t *testing.T, name string, actualXmlData interface{}) {
+func (g *Goldie) AssertXml(t testing.TB, name string, actualXmlData interface{}) {
 	t.Helper()
 	x, err := xml.MarshalIndent(actualXmlData, "", "  ")
 
@@ -110,7 +110,7 @@ func normalizeLF(d []byte) []byte {
 // the name of the test and it should typically be unique within the package.
 // Also it should be a valid file name (so keeping to `a-z0-9\-\_` is a good
 // idea).
-func (g *Goldie) AssertWithTemplate(t *testing.T, name string, data interface{}, actualData []byte) {
+func (g *Goldie) AssertWithTemplate(t testing.TB, name string, data interface{}, actualData []byte) {
 	t.Helper()
 	if *update {
 		var err error
@@ -150,15 +150,10 @@ func (g *Goldie) AssertWithTemplate(t *testing.T, name string, data interface{},
 
 // compare is reading the golden fixture file and compare the stored data with
 // the actual data.
-func (g *Goldie) compare(t *testing.T, name string, actualData []byte) error {
-	expectedData, err := ioutil.ReadFile(g.GoldenFileName(t, name))
-
+func (g *Goldie) compare(t testing.TB, name string, actualData []byte) error {
+	expectedData, err := g.goldenFileData(t, name)
 	if err != nil {
-		if os.IsNotExist(err) {
-			return newErrFixtureNotFound()
-		}
-
-		return fmt.Errorf("expected %s to be nil", err.Error())
+		return err
 	}
 
 	if !g.equal(actualData, expectedData) {
@@ -180,7 +175,7 @@ func (g *Goldie) compare(t *testing.T, name string, actualData []byte) error {
 
 // compareTemplate is reading the golden fixture file and compare the stored
 // data with the actual data.
-func (g *Goldie) compareTemplate(t *testing.T, name string, data interface{}, actualData []byte) error {
+func (g *Goldie) compareTemplate(t testing.TB, name string, data interface{}, actualData []byte) error {
 	expectedDataTmpl, err := ioutil.ReadFile(g.GoldenFileName(t, name))
 
 	if err != nil {

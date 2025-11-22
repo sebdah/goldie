@@ -157,7 +157,7 @@ func (g *Goldie) compare(t *testing.T, name string, actualData []byte) error {
 	}
 
 	if !bytes.Equal(actualData, expectedData) {
-		msg := "Result did not match the golden fixture. Diff is below:\n\n"
+		msg := fmt.Sprintf("Result for %q did not match the golden fixture. Diff is below:\n\n", name)
 		actual := string(actualData)
 		expected := string(expectedData)
 
@@ -203,7 +203,7 @@ func (g *Goldie) compareTemplate(t *testing.T, name string, data interface{}, ac
 	}
 
 	if !bytes.Equal(actualData, expectedData.Bytes()) {
-		msg := "Result did not match the golden fixture. Diff is below:\n\n"
+		msg := fmt.Sprintf("Result for %q did not match the golden fixture. Diff is below:\n\n", name)
 		actual := string(actualData)
 		expected := expectedData.String()
 

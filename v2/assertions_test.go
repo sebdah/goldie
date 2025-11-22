@@ -79,6 +79,25 @@ func TestCompare(t *testing.T) {
 	}
 }
 
+func TestCompareIncludesNameInError(t *testing.T) {
+	g := New(t)
+	name := "test_case_23.json"
+
+	err := g.Update(t, name, []byte("expected"))
+	assert.NoError(t, err)
+
+	t.Cleanup(func() {
+		err := os.RemoveAll(filepath.Dir(g.GoldenFileName(t, name)))
+		assert.NoError(t, err)
+	})
+
+	err = g.compare(t, name, []byte("actual"))
+	if assert.Error(t, err) {
+		assert.IsType(t, &errFixtureMismatch{}, err)
+		assert.Contains(t, err.Error(), name)
+	}
+}
+
 func TestCompareTemplate(t *testing.T) {
 	data := struct {
 		Name string

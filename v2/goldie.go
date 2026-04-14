@@ -61,18 +61,18 @@ var (
 	// update determines if the actual received data should be written to the
 	// golden files or not. This should be true when you need to update the
 	// golden files, but false when actually running the tests.
-	update = flag.Bool("update", truthy(os.Getenv("GOLDIE_UPDATE")), "Update golden test file fixture")
+	update *bool
 
 	// withTemplate determines if the templating data should be applied to the
 	// golden files or not. This should be true when you need to update the
 	// golden file with templating data, but false when actually running the
 	// tests.
-	withTemplate = flag.Bool("template", truthy(os.Getenv("GOLDIE_TEMPLATE")), "Apply template data to golden test file fixture")
+	withTemplate *bool
 
 	// clean determines if we should remove old golden test files in the output
 	// directory or not. This only takes effect if we are updating the golden
 	// test files.
-	clean = flag.Bool("clean", truthy(os.Getenv("GOLDIE_CLEAN")), "Clean old golden test files before writing new olds")
+	clean *bool
 
 	// ts saves the timestamp of the test run. We use ts to mark the
 	// modification time of golden file dirs for cleaning if required by
@@ -94,6 +94,13 @@ type Goldie struct {
 	ignoreTemplateErrors bool
 	useTestNameForDir    bool
 	useSubTestNameForDir bool
+}
+
+func init() {
+	flag.CommandLine = flag.NewFlagSet(os.Args[0], flag.ExitOnError)
+	update = flag.Bool("update", truthy(os.Getenv("GOLDIE_UPDATE")), "Update golden test file fixture")
+	withTemplate = flag.Bool("template", truthy(os.Getenv("GOLDIE_TEMPLATE")), "Apply template data to golden test file fixture")
+	clean = flag.Bool("clean", truthy(os.Getenv("GOLDIE_CLEAN")), "Clean old golden test files before writing new olds")
 }
 
 // === Create new testers ==================================
@@ -311,7 +318,6 @@ func (g *Goldie) GoldenFileData(t testing.TB, name string) []byte {
 // idea).
 func (g *Goldie) goldenFileData(t testing.TB, name string) ([]byte, error) {
 	expectedData, err := os.ReadFile(g.GoldenFileName(t, name))
-
 	if err != nil {
 		if os.IsNotExist(err) {
 			return nil, newErrFixtureNotFound()

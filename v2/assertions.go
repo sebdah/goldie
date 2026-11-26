@@ -157,6 +157,14 @@ func (g *Goldie) compare(t testing.TB, name string, actualData []byte) error {
 	}
 
 	if !g.equal(actualData, expectedData) {
+		// Golden files checked out on a system with core.autocrlf=true (or any
+		// other tool that rewrites line endings) may contain CRLF sequences
+		// while the actual data uses LF. Treat line ending differences alone as
+		// a match so that the same fixtures work across operating systems.
+		if g.equal(normalizeLF(actualData), normalizeLF(expectedData)) {
+			return nil
+		}
+
 		msg := fmt.Sprintf("Result for %q did not match the golden fixture. Diff is below:\n\n", name)
 		actual := string(actualData)
 		expected := string(expectedData)

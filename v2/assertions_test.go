@@ -79,6 +79,22 @@ func TestCompare(t *testing.T) {
 	}
 }
 
+func TestCompareNormalizesLineEndings(t *testing.T) {
+	g := New(t)
+	name := "crlf"
+	// Simulate a fixture checked out with CRLF line endings.
+	err := g.Update(t, name, []byte("Hello\r\nWorld\r\n"))
+	assert.Nil(t, err)
+	defer os.RemoveAll(filepath.Dir(g.GoldenFileName(t, name)))
+
+	err = g.compare(t, name, []byte("Hello\nWorld\n"))
+	assert.Nil(t, err)
+
+	// Real differences must still be reported.
+	err = g.compare(t, name, []byte("Hello\nThere\n"))
+	assert.IsType(t, &errFixtureMismatch{}, err)
+}
+
 func TestCompareIncludesNameInError(t *testing.T) {
 	g := New(t)
 	name := "test_case_23.json"
